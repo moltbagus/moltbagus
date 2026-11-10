@@ -1,5 +1,14 @@
 # moltbagus
 
+<!-- aidevops:badges:start -->
+<!-- managed by aidevops badges; edit the template, not this block -->
+
+[![Lines of code](docs/metrics/badges/loc.svg)](docs/metrics/repo-metrics.md)
+[![Dependencies](docs/metrics/badges/dependencies.svg)](docs/metrics/repo-metrics.md)
+
+[![Languages by lines of code](docs/metrics/badges/languages.svg)](docs/metrics/repo-metrics.md)
+<!-- aidevops:badges:end -->
+
 ![Go](https://img.shields.io/badge/-Go-00ADD8?style=flat-square&logo=go&logoColor=white)
 ![HTML](https://img.shields.io/badge/-HTML-E34F26?style=flat-square&logo=html5&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/-JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=black)
