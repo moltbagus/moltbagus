@@ -16,7 +16,22 @@
 <!-- STATS-START -->
 ## Work with AI
 
-_Stats will appear here automatically once [aidevops](https://aidevops.sh) has been running locally. Includes AI session hours, model usage, token costs, and screen time._
+| Metric | Yesterday | Prior 7 Days | Prior 28 Days | Prior 365 Days |
+| --- | ---: | ---: | ---: | ---: |
+| Input activity (Linux) | 1.2h | 1.2h | 1.2h | unavailable |
+| Interactive human attention | 0.0h | 0.0h | 0.0h | 0.0h |
+| Interactive AI generation | 0.0h | 0.0h | 0.0h | 0.0h |
+| Worker-classified human attention | 0.0h | 0.0h | 0.0h | 0.0h |
+| Worker/headless AI generation | 0.0h | 0.0h | 0.0h | 0.0h |
+| Additive observed work | 0.0h | 0.0h | 0.0h | 0.0h |
+| Interactive sessions | 0 | 0 | 0 | 0 |
+| Worker sessions | 0 | 0 | 0 | 0 |
+
+_Input activity from linux-input-activity:idle-cutoff-300s; collection status: ok, unavailable (fewer-than-7-sampled-days). Input sampling began 2026-11-10 (1.0 of 28 days sampled); earlier days are not counted._
+
+_Periods are completed local calendar days ending at midnight; today is excluded._
+
+_Human attention is unioned wall-clock time, so overlapping sessions are not double-counted. AI generation is additive machine work across sessions; it is not wall-clock concurrency._
 <!-- STATS-END -->
 
 <!-- PROJECTS-START -->
@@ -43,7 +58,7 @@ _Stats will appear here automatically once [aidevops](https://aidevops.sh) has b
 ---
 
 <!-- UPDATED-START -->
-_Stats auto-updated 2026-11-10 02:37 UTC by [aidevops](https://aidevops.sh) pulse._
+_Stats auto-updated 2026-11-10 16:22 UTC by [aidevops](https://aidevops.sh) pulse._
 <!-- UPDATED-END -->
 
 <!-- TOTAL-CONTRIBUTIONS-START -->
