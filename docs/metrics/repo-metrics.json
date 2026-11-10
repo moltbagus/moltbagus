@@ -1,0 +1,64 @@
+{
+  "schema": "aidevops.repo-metrics.v1",
+  "schema_version": 1,
+  "generated_at": "2026-11-10T03:08:15Z",
+  "tool": {
+    "name": "aidevops repo-metrics",
+    "version": "1.0.0"
+  },
+  "repo": {
+    "name": "moltbagus",
+    "slug": "moltbagus/moltbagus"
+  },
+  "summary": {
+    "source_files": 4,
+    "code": 180,
+    "comments": 0,
+    "blanks": 16,
+    "languages": 3,
+    "dependencies": 0
+  },
+  "languages": [
+    {
+      "name": "JSON",
+      "files": 1,
+      "code": 65,
+      "comments": 0,
+      "blanks": 0,
+      "percentage": 36.11,
+      "color": "#292929"
+    },
+    {
+      "name": "SVG",
+      "files": 2,
+      "code": 60,
+      "comments": 0,
+      "blanks": 0,
+      "percentage": 33.33,
+      "color": "#6e7781"
+    },
+    {
+      "name": "Markdown",
+      "files": 1,
+      "code": 55,
+      "comments": 0,
+      "blanks": 16,
+      "percentage": 30.56,
+      "color": "#083fa1"
+    }
+  ],
+  "dependencies": {
+    "direct": 0,
+    "runtime": 0,
+    "dev": 0,
+    "locked": 0,
+    "total": 0,
+    "ecosystems": [],
+    "manifests": []
+  },
+  "refresh": {
+    "default_policy": "weekly scheduled refresh plus manual runs; skip generated outputs younger than 24h in managed workflows",
+    "cost_profile": "fast local git/unignored-file scan; no network by default",
+    "top_languages": 6
+  }
+}
