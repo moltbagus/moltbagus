@@ -14,7 +14,9 @@
 > Stats auto-updated by [aidevops](https://aidevops.sh).
 
 <!-- STATS-START -->
-<!-- Stats will be populated on first update -->
+## Work with AI
+
+_Stats will appear here automatically once [aidevops](https://aidevops.sh) has been running locally. Includes AI session hours, model usage, token costs, and screen time._
 <!-- STATS-END -->
 
 <!-- PROJECTS-START -->
@@ -41,13 +43,20 @@
 ---
 
 <!-- UPDATED-START -->
+_Stats auto-updated 2026-11-10 02:37 UTC by [aidevops](https://aidevops.sh) pulse._
 <!-- UPDATED-END -->
 
+<!-- TOTAL-CONTRIBUTIONS-START -->
 <div align="center">
-  <a href="https://commit-history.com/moltbagus?metric=total">
+  <a href="https://commit-history.com/moltbagus?metric=total" target="_blank" rel="noopener noreferrer">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://commit-history.com/embed/moltbagus?theme=dark" />
-      <img alt="moltbagus's commit history" src="https://commit-history.com/embed/moltbagus" />
+      <source media="(prefers-color-scheme: dark)" srcset="assets/contributions/total-dark.svg" />
+      <img alt="moltbagus's cumulative total GitHub contributions" src="assets/contributions/total-light.svg" width="960" />
     </picture>
   </a>
 </div>
+
+[Verify on commit-history.com](https://commit-history.com/moltbagus?metric=total) · [Chart data](assets/contributions/total.json)
+
+Includes commits, issues, pull requests, reviews, repositories, and restricted contributions. Refreshed daily through the prior UTC day; commit-history.com may use a different refresh cutoff. GitHub controls link navigation—Ctrl/Cmd-click opens verification in a new tab.
+<!-- TOTAL-CONTRIBUTIONS-END -->
