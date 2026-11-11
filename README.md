@@ -48,6 +48,7 @@ _Human attention is unioned wall-clock time, so overlapping sessions are not dou
 <!-- CONTRIBUTIONS-START -->
 ## Contributions
 
+- **[aidevops](https://github.com/marcusquinn/aidevops)** -- Vibe-Coding is easy. DevOps is hard. OpenCode & Git token-efficient AI agent automation for your app, business, and personal development. Opinionated tools, services, CLI & API stack for speed, security, and 24/7 results. Open-source first. SOTA everything. The best AI harness for GitHub & teamwork.
 - **[FastVideo](https://github.com/hao-ai-lab/FastVideo)** -- A unified inference and post-training framework for accelerated video generation.
 - **[ruflo](https://github.com/ruvnet/ruflo)** -- 🌊 The leading agent meta-harness. Deploy intelligent multi-player swarms, coordinate autonomous workflows, and build conversational AI systems. Features adaptive memory, self-learning intelligence, RAG integration, and native Claude Code / Codex / Hermes and many more Integrated
 <!-- CONTRIBUTIONS-END -->
@@ -58,7 +59,7 @@ _Human attention is unioned wall-clock time, so overlapping sessions are not dou
 ---
 
 <!-- UPDATED-START -->
-_Stats auto-updated 2026-11-10 16:22 UTC by [aidevops](https://aidevops.sh) pulse._
+_Stats auto-updated 2026-11-11 00:03 UTC by [aidevops](https://aidevops.sh) pulse._
 <!-- UPDATED-END -->
 
 <!-- TOTAL-CONTRIBUTIONS-START -->
