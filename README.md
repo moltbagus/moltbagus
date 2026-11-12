@@ -18,7 +18,7 @@
 
 | Metric | Yesterday | Prior 7 Days | Prior 28 Days | Prior 365 Days |
 | --- | ---: | ---: | ---: | ---: |
-| Input activity (Linux) | 0h | 1.2h | 1.2h | unavailable |
+| Input activity (Linux) | 1.1h | 2.3h | 2.3h | unavailable |
 | Interactive human attention | 0.0h | 0.0h | 0.0h | 0.0h |
 | Interactive AI generation | 0.0h | 0.0h | 0.0h | 0.0h |
 | Worker-classified human attention | 0.0h | 0.0h | 0.0h | 0.0h |
@@ -27,7 +27,7 @@
 | Interactive sessions | 0 | 0 | 0 | 0 |
 | Worker sessions | 0 | 0 | 0 | 0 |
 
-_Input activity from linux-input-activity:idle-cutoff-300s; collection status: ok, unavailable (fewer-than-7-sampled-days). Input sampling began 2026-11-10 (2.0 of 28 days sampled); earlier days are not counted._
+_Input activity from linux-input-activity:idle-cutoff-300s; collection status: ok, unavailable (fewer-than-7-sampled-days). Input sampling began 2026-11-10 (3.0 of 28 days sampled); earlier days are not counted._
 
 _Periods are completed local calendar days ending at midnight; today is excluded._
 
@@ -59,7 +59,7 @@ _Human attention is unioned wall-clock time, so overlapping sessions are not dou
 ---
 
 <!-- UPDATED-START -->
-_Stats auto-updated 2026-11-12 08:25 UTC by [aidevops](https://aidevops.sh) pulse._
+_Stats auto-updated 2026-11-12 16:04 UTC by [aidevops](https://aidevops.sh) pulse._
 <!-- UPDATED-END -->
 
 <!-- TOTAL-CONTRIBUTIONS-START -->
