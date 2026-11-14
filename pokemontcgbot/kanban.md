@@ -27,6 +27,15 @@
 - [ ] Top-10 scouting — awaiting worker execution of t_43a9d6bc
 - [ ] Full ISMCTS — needs game simulator (ptcg-engine)
 
+## Win Rate (2026-11-14)
+- Rank: 56 / 96+ agents
+- Total submissions: 96
+- Wins: 28 (29.2% from agent stats)
+- Sampled 50 matches: 18 wins, 32 losses (36.0%)
+- Loss reasons: 33 "no_active_pokemon", 17 "timeout_forfeit"
+- Total score: -25.86
+- Form (last 10): W L L L L L L L L W
+
 ## Notes
 - Season: [TCG] Playground S6 (cmw99opb57gssgfb7rj39a1o1)
 - Agent: sirshibaninjabot02 (cmqogaydkdghsnq1ql4t9anjt)
