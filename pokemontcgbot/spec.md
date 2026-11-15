@@ -1,84 +1,172 @@
-# Specification — Pokemon TCG Minimal Bot
+# Specification — Pokemon TCG Bot (World-Class Target)
 
 ## 1. Purpose
-A minimal, legal, always-legal Pokemon TCG agent for DevFun Arena owner-hosted (remote) seasons. It exists to prove end-to-end play (join, poll, act, settle) before stronger strategies are added.
+A competitive Pokemon TCG agent for DevFun Arena (and future arena.ptcgtools.com) that can:
+- Join and play owner-hosted (remote) seasons continuously
+- Submit hosted bundles (sandbox mode) when available
+- Train and evaluate locally against strong opponents
+- Improve over time via scouting, self-play, and search
+- Model opponent hidden information via Bayesian belief tracking
 
-## 2. Scope
-In scope:
-- Load credentials from `/home/colb/.arena-credentials`.
-- Validate and submit a 60-card deck.
-- Join `[TCG] Playground S6` (`cmw99opb57gssgfb7rj39a1o1`).
-- Poll pending actions and post exactly one legal action per decision point.
-- Persist `.arena-tcg-state`.
-- Run continuously until stopped.
+## 2. Current State (2026-11-15)
+- **Arena:** [TCG] Playground S6 (cmw99opb57gssgfb7rj39a1o1), Active, Free, Remote mode
+- **Agent:** sirshibaninjabot02 (cmqogaydkdghsnq1ql4t9anjt)
+- **Win rate:** 34.7% (161W/464 submissions), rank 57, score -91.43
+- **Form:** 10 consecutive losses
+- **Deck:** Locked to Budew (30 HP) — cannot change in remote mode
+- **Loss reasons:** 66% "no_active_pokemon", 34% "timeout_forfeit"
 
-Out of scope (future):
-- Deck optimization, search, learning, hosted bundles, credits seasons.
+## 3. Architecture
 
-## 3. Deck Specification
-- 4x Druddigon (cardId 625): Basic Colorless Pokemon, 120 HP, 0-energy attack "Shred" (40 damage, ignores effects on Defending Pokemon).
-- 4x Pikachu ex (cardId 328): Basic Lightning Pokemon, 190 HP, 0-energy attack "Tail Whap" (30 damage).
-- 4x Hop's Zacian ex (cardId 299): Basic Metal Pokemon, 230 HP, 0-energy attack "Insta-Strike" (30 damage).
-- 4x Enamorus (cardId 39): Basic Grass Pokemon, 120 HP, 0-energy attack "Heart Sign" (30 damage).
-- 4x Tauros (cardId 390): Basic Colorless Pokemon, 130 HP, 0-energy attack "Horn Attack" (30 damage).
-- 40x Basic {G} Energy (cardId 1).
-- Total 60. Copy limits satisfied (energy exempt). At least one Basic. No ACE SPEC. No evolutions.
-- Rationale: All 0-energy attacks (can attack turn 1), mixed HP tiers (120-230), higher damage than previous Budew deck. Druddigon leads with 40 damage.
+### 3.1 Modules
+| Module | File | Purpose | Status |
+|---|---|---|---|
+| Bot core | `bot.py` | Join, poll, act loop, deck validation | ✅ Working |
+| Async bot | `bot_async.py` | httpx async I/O, deadline safety | ✅ Built, untested in matches |
+| Belief tracker | `belief.py` | Bayesian opponent hand tracking | ✅ Built & tested |
+| ISMCTS search | `ismcts.py` | Belief-weighted action scoring | ✅ Built & tested (heuristic only) |
+| Ruflo backbone | `ruflo_tcg.py` | Self-improvement, promotion gates | ✅ Built & tested (L1) |
+| Deterministic tests | `tests/` | Deck viability, latency, bench depth | ✅ 8 tests passing |
+| Hosted bundle | `tcg-bundle/` | Sandbox submission (zip) | ✅ Built, not submitted (no sandbox season) |
 
-## 4. Runtime Behavior
-1. Validate deck locally.
-2. Join via `POST /api/arena/tcg/join`.
-3. Loop:
-   - `GET /api/arena/tcg/pending-actions?competitionId=...`
-   - If pending empty and activeMatches non-empty: opponent acting; wait 2s.
-   - If pending empty and no active: re-join to keep queue; wait 2s.
-   - For each pending entry: choose action, `POST /tcg/action`, retry on `arena_transaction_busy`.
-4. On Settled/Aborted: log and continue polling.
-5. Persist state after join.
+### 3.2 Decision Flow
+1. Poll pending-actions (~2s interval)
+2. For each pending entry:
+   a. Parse obs, yourIndex
+   b. Update belief tracker from obs
+   c. Generate legal actions (provided by arena)
+   d. Score each action: damage (2x) + belief threat penalty + prize bonus + safety bonus
+   e. Select best legal action
+   f. Post action; retry on 409 arena_transaction_busy
+3. On Settled/Aborted: log result, update Ruflo, continue polling
 
-## 5. Action Selection (minimal)
-- Parse legal action strings like `[0]`.
-- Score by option damage in `obs.select.option[idx]`; pick highest; tie-break first legal.
-- Fallback: first legal action.
-- Never send an action not in `legalActions`.
+### 3.3 Deck Specification (current — locked to Budew in arena)
+- 4x Budew (235) + 56x Grass Energy (1) = 60 cards
+- **Weak**: 30 HP, 10 damage, no bench, no trainers
 
-## 6. Safety
-- Never hardcode or print apiKey.
-- Wrap network errors; retry with backoff.
-- Near deadline, still post best legal action.
-- No secrets in state file or logs.
+### 3.4 Deck Specification (new — for next season/bundle)
+- 4x Druddigon (625): 120 HP, 0-energy Shred (40 dmg)
+- 4x Pikachu ex (328): 190 HP, 0-energy Tail Whap (30 dmg)
+- 4x Hop's Zacian ex (299): 230 HP, 0-energy Insta-Strike (30 dmg)
+- 4x Enamorus (39): 120 HP, 0-energy Heart Sign (30 dmg)
+- 4x Tauros (390): 130 HP, 0-energy Horn Attack (30 dmg)
+- 40x Basic {G} Energy (1)
+- Total: 60. All 0-energy attacks. Mixed HP tiers (120-230).
 
-## 7. Success Criteria
-- Joins without 4xx (except idempotent re-join).
-- Completes at least 1 match without forfeit/timeout.
-- `strategyComputeMsMedian` > 0 if hosted; decision log present.
-- State file updated.
+### 3.5 Belief State Tracking
+- Hypergeometric: P(card in hand) = 1 - C(N-r, h) / C(N, h)
+- Updates on: play, draw, discard, search, prize take
+- Tracks: discard, board, prizes taken, hand size, deck size
+- Deck inference from observed cards (when archetype unknown)
 
-## 9. Belief State Tracker (belief.py)
-- Bayesian tracker for opponent's hidden hand.
-- Tracks public zones: discard, board, prizes taken.
-- Hypergeometric probability: P(card in hand) = 1 - C(N-r, h) / C(N, h).
-- Updates on: play, draw, discard, search, prize take.
-- Provides: hand_probabilities(), top_threats(), expected_copies_in_hand(), is_likely_in_hand().
-- Integration point for ISMCTS search (Phase 4).
+## 4. World-Class Roadmap
 
-## 10. Files
-- `bot.py` — implementation.
-- `belief.py` — Bayesian belief state tracker.
-- `spec.md` — this file.
-- `PRD.md` — product requirements.
+### Phase 0 — Foundations (DONE)
+- [x] Local engine integration (arena API)
+- [x] Random/heuristic agent (damage-based)
+- [x] Determinism validation (8 tests)
+- [x] Legal action enumeration
 
-## 11. Ruflo Self-Improvement (ruflo_tcg.py)
-- Autonomy ladder: L1 (DRY_RUN) → L2 (HUMAN_APPROVE) → L3 (AUTO_KILLSWITCH) → L4 (FULL_AUTO).
-- Promotion gates: Bayesian evidence (win rate, sample size, z-score thresholds).
-- Demotion triggers: forfeit streak, WR drop, timeout streak, human override.
-- Match tracking: records win/loss/forfeit/timeout with opponent, actions, HP, prizes.
-- Strategy proposals: propose → apply → revert lifecycle with before/after win rates.
-- SFL Stage 1: failure recording for self-learning.
-- State: SQLite (ruflo_tcg.db) with WAL mode.
+### Phase 1 — Local Training Loop (IN PROGRESS)
+- [x] Belief state tracker (belief.py)
+- [x] Self-play harness (ruflo_tcg.py match tracking)
+- [ ] Feature engineering / observation encoder
+- [ ] Behavior cloning from heuristic
+- [ ] High-throughput self-play (target 1000s games/hour)
 
-## 12. Integration Architecture
-- bot.py imports belief, ismcts, ruflo_tcg (all optional with HAS_* flags).
-- choose_action() tries belief-weighted heuristic first, falls back to damage heuristic.
-- play_loop() passes ruflo instance for match tracking.
-- main() initializes all subsystems with graceful degradation.
+### Phase 2 — Stronger Decision Making (PLANNED)
+- [ ] Typed heuristic scoring per selection context
+- [ ] Prize trade evaluation
+- [ ] Retreat decision logic
+- [ ] Trainer card support (search, draw, gust)
+- [ ] Energy attachment strategy
+- [ ] Hidden-info determinization (mirror deck)
+
+### Phase 3 — Search (PLANNED)
+- [ ] Install ptcg-engine for local simulation
+- [ ] Forward-model MCTS with opponent-as-MDP
+- [ ] Gate on time budget (fall back to heuristic if < 500ms)
+- [ ] Single determinization per decision
+
+### Phase 4 — Arena Integration (PLANNED)
+- [ ] Async I/O (httpx) — bot_async.py built, needs match testing
+- [ ] Continuous ladder play with logging
+- [ ] Deck selection / meta adaptation layer
+- [ ] WebSocket client for arena.ptcgtools.com (future)
+
+### Phase 5 — Self-Play Training (PLANNED)
+- [ ] PPO self-play on ptcg-engine
+- [ ] numpy-only inference export for hosted bundle
+- [ ] Expert iteration (IS-MCTS distillation)
+- [ ] A/B test new models vs current heuristic
+
+### Phase 6 — Hosted Bundle (PLANNED)
+- [ ] Build zip with manifest + strategy.py
+- [ ] Ensure no network deps; test imports in clean env
+- [ ] Submit when sandbox season available
+- [ ] Monitor engine.allowance and strategyComputeMsMedian
+
+## 5. Success Criteria
+
+### Current (Phase 0-1)
+- [x] Joins without 4xx
+- [x] Completes matches without forfeit (when not timed out)
+- [x] State file updated
+- [x] 8 deterministic tests passing
+
+### Target (Phase 2)
+- [ ] Win rate > 50% (from 34.7%)
+- [ ] 0 timeout forfeits in 20+ matches
+- [ ] Fewer "no_active_pokemon" losses
+- [ ] Belief tracker integrated into decision loop
+
+### Target (Phase 3-4)
+- [ ] Win rate > 60%
+- [ ] MCTS activates in > 80% of decisions
+- [ ] Async I/O eliminates timeout losses
+
+### Target (Phase 5-6)
+- [ ] Win rate > 70%
+- [ ] Model promotes via Ruflo gates
+- [ ] Hosted bundle submitted and competitive
+
+## 6. Files
+
+| File | Purpose |
+|---|---|
+| `bot.py` | Sync implementation (join, poll, act) |
+| `bot_async.py` | Async implementation (httpx, deadline safety) |
+| `belief.py` | Bayesian belief state tracker |
+| `ismcts.py` | ISMCTS search + belief-weighted heuristic |
+| `ruflo_tcg.py` | Self-improvement backbone |
+| `spec.md` | This file |
+| `PRD.md` | Product requirements |
+| `kanban.md` | Task board |
+| `research-plan.md` | Root cause analysis + 5-phase plan |
+| `world-class-plan.md` | Full PTCGL Standard target plan |
+| `scouting-report.md` | Top agent analysis |
+| `loss-analysis.md` | 20-match loss breakdown |
+| `deterministic-checks.md` | Lauren Tan principle applied |
+| `tests/test_deck_viability.py` | Deck quality tests (6 tests) |
+| `tests/test_decision_latency.py` | Latency tests (2 tests) |
+
+## 7. Open Questions
+
+1. When will a sandbox-mode TCG season open? (Need to deploy new deck)
+2. Should we enter Stakes S6 (paid, 100k microUSD/entry)? Requires owner authorization.
+3. Should we migrate to arena.ptcgtools.com for permanent ladder access?
+4. What's the compute budget for self-play training (GPU available)?
+
+## 8. Decision Log
+
+| Date | Decision | Rationale |
+|---|---|---|
+| 2026-11-13 | Build minimal legal bot | Validate join/play loop |
+| 2026-11-13 | Use Budew deck for validation | 0-energy, legal, simple |
+| 2026-11-14 | Switch to high-HP deck | Budew too weak (30 HP) |
+| 2026-11-14 | Build belief tracker | Model opponent hidden info |
+| 2026-11-14 | Build Ruflo backbone | Autonomous self-improvement |
+| 2026-11-14 | Build deterministic tests | Lauren Tan principle |
+| 2026-11-15 | Build async bot | Fix timeout forfeits |
+| 2026-11-15 | Research world-class plan | Full PTCGL Standard target |
+| 2026-11-15 | Scout top agents | Understand competitive meta |
