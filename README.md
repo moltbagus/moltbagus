@@ -18,20 +18,22 @@
 
 | Metric | Yesterday | Prior 7 Days | Prior 28 Days | Prior 365 Days |
 | --- | ---: | ---: | ---: | ---: |
-| Input activity (Linux) | 0.1h | 2.7h | 2.7h | unavailable |
+| Input activity (Linux) | 0h | 2.7h | 2.7h | ~141h* |
 | Interactive human attention | 0.0h | 0.0h | 0.0h | 0.0h |
-| Interactive AI generation | 0.0h | 0.0h | 0.0h | 0.0h |
+| Interactive AI generation | 0.0h | 0.1h | 0.1h | 0.1h |
 | Worker-classified human attention | 0.0h | 0.0h | 0.0h | 0.0h |
 | Worker/headless AI generation | 0.0h | 0.0h | 0.0h | 0.0h |
-| Additive observed work | 0.0h | 0.0h | 0.0h | 0.0h |
-| Interactive sessions | 8 | 8 | 8 | 8 |
+| Additive observed work | 0.0h | 0.1h | 0.1h | 0.1h |
+| Interactive sessions | 1 | 8 | 8 | 8 |
 | Worker sessions | 0 | 0 | 0 | 0 |
 
-_Input activity from linux-input-activity:idle-cutoff-300s; collection status: ok, unavailable (fewer-than-7-sampled-days). Input sampling began 2026-11-10 (6.0 of 28 days sampled); earlier days are not counted. Latest sample measured: terminal input only; no desktop session on this host._
+_Input activity from linux-input-activity:idle-cutoff-300s; collection status: ok. Input sampling began 2026-11-10 (7.0 of 28 days sampled); earlier days are not counted. Latest sample measured: terminal input only; no desktop session on this host. *365-day estimate uses observed calendar coverage._
 
 _Periods are completed local calendar days ending at midnight; today is excluded._
 
 _Human attention is unioned wall-clock time, so overlapping sessions are not double-counted. AI generation is additive machine work across sessions; it is not wall-clock concurrency._
+
+_AI session 365-day totals cover 1 days of local assistant session history (not extrapolated)._
 
 ## AI Model Usage (last 30 days)
 
@@ -81,7 +83,7 @@ _1.9M total tokens processed. 86.8% cache hit rate._
 ---
 
 <!-- UPDATED-START -->
-_Stats auto-updated 2026-11-16 14:09 UTC by [aidevops](https://aidevops.sh) pulse._
+_Stats auto-updated 2026-11-16 16:11 UTC by [aidevops](https://aidevops.sh) pulse._
 <!-- UPDATED-END -->
 
 <!-- TOTAL-CONTRIBUTIONS-START -->
