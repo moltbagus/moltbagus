@@ -24,7 +24,7 @@
 | Worker-classified human attention | 0.0h | 0.0h | 0.0h | 0.0h |
 | Worker/headless AI generation | 0.0h | 0.0h | 0.0h | 0.0h |
 | Additive observed work | 0.0h | 0.0h | 0.0h | 0.0h |
-| Interactive sessions | 7 | 7 | 7 | 7 |
+| Interactive sessions | 8 | 8 | 8 | 8 |
 | Worker sessions | 0 | 0 | 0 | 0 |
 
 _Input activity from linux-input-activity:idle-cutoff-300s; collection status: ok, unavailable (fewer-than-7-sampled-days). Input sampling began 2026-11-10 (6.0 of 28 days sampled); earlier days are not counted. Latest sample measured: terminal input only; no desktop session on this host._
@@ -37,23 +37,23 @@ _Human attention is unioned wall-clock time, so overlapping sessions are not dou
 
 | Model | Requests | Input | Output | Cache read | Cache write | Cache Hit-Rate % | Session Count | Session Hours |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| deepseek-v4.1-flash | 26 | 132K | 4K | 1.3M | 0 | 91.2% | 3 | 0.0h |
 | big-pickle | 12 | 103K | 2K | 352K | 0 | 77.3% | 2 | 0.0h |
 | claude-opus-5-5 | 2 | 0 | 0 | 0 | 0 | 0.0% | 2 | 0.0h |
-| deepseek-v4.1-flash | 2 | 60K | 49 | 0 | 0 | 0.0% | 2 | 0.0h |
-| **Total** | **16** | **164K** | **2K** | **352K** | **0** | **68.2%** | **6** | **0.0h** |
+| **Total** | **40** | **236K** | **7K** | **1.7M** | **0** | **88%** | **7** | **0.1h** |
 
-_519K total tokens processed. 68.2% cache hit rate._
+_1.9M total tokens processed. 88% cache hit rate._
 
 ## AI Model Usage (all time)
 
 | Model | Requests | Input | Output | Cache read | Cache write | Cache Hit-Rate % | Session Count | Session Hours |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| deepseek-v4.1-flash | 27 | 158K | 4K | 1.3M | 0 | 89.7% | 4 | 0.0h |
 | big-pickle | 12 | 103K | 2K | 352K | 0 | 77.3% | 2 | 0.0h |
-| deepseek-v4.1-flash | 3 | 86K | 87 | 2K | 0 | 2.4% | 3 | 0.0h |
 | claude-opus-5-5 | 2 | 0 | 0 | 0 | 0 | 0.0% | 2 | 0.0h |
-| **Total** | **17** | **190K** | **2K** | **354K** | **0** | **65.1%** | **7** | **0.0h** |
+| **Total** | **41** | **262K** | **7K** | **1.7M** | **0** | **86.8%** | **8** | **0.1h** |
 
-_547K total tokens processed. 65.1% cache hit rate._
+_1.9M total tokens processed. 86.8% cache hit rate._
 <!-- STATS-END -->
 
 <!-- PROJECTS-START -->
@@ -81,7 +81,7 @@ _547K total tokens processed. 65.1% cache hit rate._
 ---
 
 <!-- UPDATED-START -->
-_Stats auto-updated 2026-11-16 00:22 UTC by [aidevops](https://aidevops.sh) pulse._
+_Stats auto-updated 2026-11-16 14:09 UTC by [aidevops](https://aidevops.sh) pulse._
 <!-- UPDATED-END -->
 
 <!-- TOTAL-CONTRIBUTIONS-START -->
