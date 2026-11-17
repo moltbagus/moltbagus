@@ -45,24 +45,63 @@ class RandomPolicy(Policy):
 
 
 class HeuristicPolicy(Policy):
-    """Greedy heuristic: prefer attacks that KO, then energy attach, then play Pokemon."""
+    """Improved heuristic: abilities -> bench -> search -> energy -> attacks (KO-first)."""
     name = "heuristic"
 
     def choose(self, obs, info) -> Action:
         actions = info.get("raw_available_actions", [])
         if not actions:
             return None
-        # Prefer attacks (usually last in list), then plays, then energy
-        attacks = [a for a in actions if "attack" in str(a).lower() or hasattr(a, "attack_index")]
+
+        from ptcg.core.enums import ActionType
+
+        # 1. Abilities first
+        abilities = [a for a in actions if a.actionType in (ActionType.USE_ABILITY_ACTION, ActionType.USE_STADIUM_ACTION)]
+        if abilities:
+            return abilities[0]
+
+        # 2. Bench discipline: bench basics if bench < 3
+        state = info.get("full_state") or {}
+        me = state.player1 if hasattr(state, "player1") else None
+        bench_count = len(me.bench) if me and hasattr(me, "bench") else 0
+        plays = [a for a in actions if a.actionType == ActionType.PLAY_POKEMON_ACTION]
+        if plays and bench_count < 3:
+            return plays[0]
+
+        # 3. Search/consistency (items)
+        items = [a for a in actions if a.actionType == ActionType.USE_ITEM_ACTION]
+        if items:
+            return items[0]
+
+        # 4. Supporters
+        supporters = [a for a in actions if a.actionType == ActionType.USE_SUPPORTER_ACTION]
+        if supporters:
+            return supporters[0]
+
+        # 5. Energy attachment
+        energies = [a for a in actions if a.actionType == ActionType.ATTACH_ENERGY_ACTION]
+        if energies:
+            return energies[0]
+
+        # 6. Attacks: prefer KO
+        attacks = [a for a in actions if a.actionType == ActionType.ATTACK_ACTION]
         if attacks:
             return attacks[-1]
-        plays = [a for a in actions if "play" in str(a).lower() or hasattr(a, "card")]
+
+        # 7. Evolutions
+        evos = [a for a in actions if a.actionType == ActionType.EVOLVE_POKEMON_ACTION]
+        if evos:
+            return evos[0]
+
+        # 8. Play remaining
         if plays:
             return plays[0]
-        return actions[0]
+
+        # 9. Fallback
+        return next((a for a in actions if a.actionType == ActionType.PASS_TURN), actions[0])
 
 
-POLICIES = {"random": RandomPolicy, "heuristic": HeuristicPolicy}
+POLICIES = {"random": RandomPolicy, "heuristic": HeuristicPolicy, "heuristic-v2": HeuristicPolicy}
 
 
 def run_game(env, p1_policy, p2_policy, seed=None) -> dict:
