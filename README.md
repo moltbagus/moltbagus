@@ -18,16 +18,16 @@
 
 | Metric | Yesterday | Prior 7 Days | Prior 28 Days | Prior 365 Days |
 | --- | ---: | ---: | ---: | ---: |
-| Input activity (Linux) | 0h | 2.7h | 2.7h | ~141h* |
+| Input activity (Linux) | 0h | 1.5h | 2.7h | ~123h* |
 | Interactive human attention | 0.0h | 0.0h | 0.0h | 0.0h |
-| Interactive AI generation | 0.0h | 0.1h | 0.1h | 0.1h |
+| Interactive AI generation | 0.2h | 0.3h | 0.3h | 0.3h |
 | Worker-classified human attention | 0.0h | 0.0h | 0.0h | 0.0h |
 | Worker/headless AI generation | 0.0h | 0.0h | 0.0h | 0.0h |
-| Additive observed work | 0.0h | 0.1h | 0.1h | 0.1h |
-| Interactive sessions | 4 | 11 | 11 | 11 |
+| Additive observed work | 0.2h | 0.3h | 0.3h | 0.3h |
+| Interactive sessions | 3 | 11 | 11 | 11 |
 | Worker sessions | 0 | 0 | 0 | 0 |
 
-_Input activity from linux-input-activity:idle-cutoff-300s; collection status: ok. Input sampling began 2026-11-10 (7.0 of 28 days sampled); earlier days are not counted. Latest sample measured: terminal input only; no desktop session on this host. *365-day estimate uses observed calendar coverage._
+_Input activity from linux-input-activity:idle-cutoff-300s; collection status: ok. Input sampling began 2026-11-10 (8.0 of 28 days sampled); earlier days are not counted. Latest sample measured: terminal input only; no desktop session on this host. *365-day estimate uses observed calendar coverage._
 
 _Periods are completed local calendar days ending at midnight; today is excluded._
 
@@ -83,7 +83,7 @@ _5.7M total tokens processed. 92.6% cache hit rate._
 ---
 
 <!-- UPDATED-START -->
-_Stats auto-updated 2026-11-17 03:26 UTC by [aidevops](https://aidevops.sh) pulse._
+_Stats auto-updated 2026-11-17 16:13 UTC by [aidevops](https://aidevops.sh) pulse._
 <!-- UPDATED-END -->
 
 <!-- TOTAL-CONTRIBUTIONS-START -->
