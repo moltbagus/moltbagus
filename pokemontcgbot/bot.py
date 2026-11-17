@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Minimal legal Pokemon TCG bot for DevFun Arena (owner-hosted / remote mode).
 
-Reads credentials from /home/colb/.arena-credentials. Deck is a simple, legal
+Reads credentials from ~/.arena-credentials. Deck is a simple, legal
 starter list: 4x Budew (card 235) + 56x Basic Grass Energy (card 1).
 
 Join is idempotent; the deck is locked for the season on first successful join.
@@ -32,10 +32,15 @@ try:
 except ImportError:
     HAS_RUFLO = False
 
-CREDS_PATH = Path("/home/colb/.arena-credentials")
+CREDS_PATH = Path.home() / ".arena-credentials"
 COMPETITION_ID = "cmw99opb57gssgfb7rj39a1o1"
 BASE_URL = "https://arena.dev.fun/api/arena"
-STATE_PATH = Path("/home/colb/.arena-tcg-state")
+STATE_PATH = Path.home() / ".arena-tcg-state"
+
+# Keep every non-action request short so a slow poll cannot eat a match deadline.
+PENDING_TIMEOUT = 3.0
+JOIN_TIMEOUT = 5.0
+RESULTS_TIMEOUT = 5.0
 
 # Global instances (initialized in main)
 BELIEF_HEURISTIC = None
@@ -94,7 +99,7 @@ def validate_deck(deck):
 
 
 def join(api_key):
-    status, resp = api("POST", "/tcg/join", api_key, {"competitionId": COMPETITION_ID, "joinPayload": DECK})
+    status, resp = api("POST", "/tcg/join", api_key, {"competitionId": COMPETITION_ID, "joinPayload": DECK}, timeout=JOIN_TIMEOUT)
     print(f"join -> {status}: {resp}")
     return status, resp
 
@@ -179,7 +184,7 @@ def feed_ruflo_results(api_key, agent_id, ruflo, reported):
         "GET",
         f"/tcg/matches?competitionId={COMPETITION_ID}&agentId={agent_id}&limit=10",
         api_key,
-        timeout=10,
+        timeout=RESULTS_TIMEOUT,
     )
     if status != 200 or not isinstance(resp, dict):
         return 0
@@ -209,7 +214,11 @@ def error_code(resp):
     if not isinstance(resp, dict):
         return None
     err = resp.get("error")
-    return err.get("code") if isinstance(err, dict) else None
+    if isinstance(err, dict):
+        return err.get("code")
+    if isinstance(err, str):
+        return err
+    return None
 
 
 def choose_action(pending_entry, belief_heuristic=None):
@@ -247,7 +256,7 @@ def play_loop(api_key, agent_id, ruflo=None):
     while True:
         now = time.time()
 
-        status, resp = api("GET", f"/tcg/pending-actions?competitionId={COMPETITION_ID}", api_key)
+        status, resp = api("GET", f"/tcg/pending-actions?competitionId={COMPETITION_ID}", api_key, timeout=PENDING_TIMEOUT)
         if status != 200 or not isinstance(resp, dict):
             print(f"pending-actions error {status}: {resp}")
             time.sleep(2)

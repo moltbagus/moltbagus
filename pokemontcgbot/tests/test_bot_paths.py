@@ -36,8 +36,14 @@ def test_choose_action_fallback_is_card_aware():
     assert bot.choose_action(entry, None) == "[0]"
 
 
+def test_poll_timeouts_cannot_eat_match_deadlines():
+    assert bot.PENDING_TIMEOUT <= 5.0
+    assert bot.JOIN_TIMEOUT <= 5.0
+    assert bot.RESULTS_TIMEOUT <= 5.0
+
+
 def test_error_code_handles_string_error():
-    assert bot.error_code({"error": "action_conflict"}) is None
+    assert bot.error_code({"error": "action_conflict"}) == "action_conflict"
     assert bot.error_code({"error": {"code": "action_conflict"}}) == "action_conflict"
     assert bot.error_code({"error": {"code": "arena_transaction_busy"}}) == "arena_transaction_busy"
     assert bot.error_code(None) is None

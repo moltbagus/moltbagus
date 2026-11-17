@@ -43,10 +43,15 @@ from bot import (
     save_reported_matches,
 )
 
-CREDS_PATH = Path("/home/colb/.arena-credentials")
+CREDS_PATH = Path.home() / ".arena-credentials"
 COMPETITION_ID = "cmw99opb57gssgfb7rj39a1o1"
 BASE_URL = "https://arena.dev.fun/api/arena"
-STATE_PATH = Path("/home/colb/.arena-tcg-state")
+STATE_PATH = Path.home() / ".arena-tcg-state"
+
+# Keep non-action requests short so a slow poll cannot eat a match deadline.
+PENDING_TIMEOUT = 3.0
+JOIN_TIMEOUT = 5.0
+RESULTS_TIMEOUT = 5.0
 
 # New high-HP deck (will be locked on first join — use sandbox for changes)
 DECK = [625] * 4 + [328] * 4 + [299] * 4 + [39] * 4 + [390] * 4 + [1] * 40
@@ -87,6 +92,86 @@ async def api(client, method, path, api_key=None, body=None, timeout=30):
         return 0, {"error": str(e)}
 
 
+def error_code(resp):
+    """Return the arena error code from either error shape.
+
+    The arena returns {'error': {'code': ...}} for transaction errors but
+    {'error': 'action_conflict'} for duplicate submissions. Returning a
+    string here is what used to crash the loop.
+    """
+    if not isinstance(resp, dict):
+        return None
+    err = resp.get("error")
+    if isinstance(err, dict):
+        return err.get("code")
+    if isinstance(err, str):
+        return err
+    return None
+
+
+def _parse_retry_after(err):
+    """Parse retryAfter defensively; a non-numeric value must not crash."""
+    if not isinstance(err, dict):
+        return 1
+    try:
+        return max(1, int(err.get("retryAfter", 1)))
+    except (TypeError, ValueError):
+        return 1
+
+
+async def post_action(client, api_key, match_id, seq, action, timeout=10.0, deadline_ms=None):
+    """POST one action with a bounded retry budget.
+
+    Retries transport failures (status 0), 408, 429, 5xx and 409
+    arena_transaction_busy. A 409 action_conflict means another client
+    already answered this decision point, so it is returned immediately
+    instead of being retried.
+    """
+    started = time.monotonic()
+    last = (0, {"error": "not attempted"})
+    for attempt in range(1, 5):
+        budget = timeout
+        if deadline_ms:
+            try:
+                remaining = (int(deadline_ms) - int(time.time() * 1000)) / 1000.0
+            except (TypeError, ValueError):
+                remaining = None
+            if remaining is not None and remaining > 0:
+                budget = max(2.0, min(timeout, remaining))
+
+        st, r = await api(
+            client,
+            "POST",
+            "/tcg/action",
+            api_key,
+            {"matchId": match_id, "seq": seq, "action": action},
+            timeout=budget,
+        )
+        last = (st, r)
+        code = error_code(r)
+        print(f"match {match_id[:8]} seq {seq} -> {action} : {st} {code or ''} (attempt {attempt})")
+
+        if st in (200, 201, 202):
+            return st, r
+        if st == 409:
+            if code != "arena_transaction_busy":
+                return st, r  # action_conflict: another client answered it
+            wait = _parse_retry_after(r.get("error") if isinstance(r, dict) else None)
+        elif st == 429:
+            wait = _parse_retry_after(r.get("error") if isinstance(r, dict) else None)
+        elif st == 0 or st == 408 or st >= 500:
+            wait = min(2 ** (attempt - 1), 4)
+        else:
+            return st, r  # other 4xx cannot be fixed by retrying
+
+        if time.monotonic() - started + wait > 15.0:
+            break
+        await asyncio.sleep(wait)
+
+    print(f"UNACKNOWLEDGED match {match_id[:8]} seq {seq}: last={last[0]} {last[1]}")
+    return last
+
+
 def validate_deck(deck):
     assert len(deck) == 60, f"deck must be 60 cards, got {len(deck)}"
     from collections import Counter
@@ -99,7 +184,7 @@ def validate_deck(deck):
 
 
 async def join(client, api_key):
-    status, resp = await api(client, "POST", "/tcg/join", api_key, {"competitionId": COMPETITION_ID, "joinPayload": DECK})
+    status, resp = await api(client, "POST", "/tcg/join", api_key, {"competitionId": COMPETITION_ID, "joinPayload": DECK}, timeout=JOIN_TIMEOUT)
     print(f"join -> {status}: {resp}")
     return status, resp
 
@@ -113,7 +198,7 @@ async def feed_ruflo_results(client, api_key, agent_id, ruflo, reported):
         "GET",
         f"/tcg/matches?competitionId={COMPETITION_ID}&agentId={agent_id}&limit=10",
         api_key,
-        timeout=10,
+        timeout=RESULTS_TIMEOUT,
     )
     if status != 200 or not isinstance(resp, dict):
         return 0
@@ -148,7 +233,7 @@ async def play_loop(client, api_key, agent_id, ruflo=None):
     while True:
         now = time.time()
 
-        status, resp = await api(client, "GET", f"/tcg/pending-actions?competitionId={COMPETITION_ID}", api_key)
+        status, resp = await api(client, "GET", f"/tcg/pending-actions?competitionId={COMPETITION_ID}", api_key, timeout=PENDING_TIMEOUT)
         if status != 200 or not isinstance(resp, dict):
             print(f"pending-actions error {status}: {resp}")
             await asyncio.sleep(2)
@@ -179,62 +264,54 @@ async def play_loop(client, api_key, agent_id, ruflo=None):
             continue
 
         for entry in pending:
-            match_id = entry["matchId"]
-            seq = entry["seq"]
+            try:
+                match_id = entry["matchId"]
+                seq = entry["seq"]
 
-            if match_id != current_match:
-                current_match = match_id
-                if BELIEF_HEURISTIC is not None and HAS_BELIEF:
+                if match_id != current_match:
+                    current_match = match_id
+                    if BELIEF_HEURISTIC is not None and HAS_BELIEF:
+                        try:
+                            BELIEF_HEURISTIC.belief.reset_for_match()
+                        except Exception:
+                            pass
+
+                action = choose_action(entry, BELIEF_HEURISTIC)
+
+                if action is None:
+                    legal = entry.get("legalActions") or []
+                    if not legal:
+                        print(f"no legal action for {match_id} seq {seq}")
+                        continue
+                    action = legal[0]
+
+                # Never skip near the deadline; post the best legal action.
+                deadline = entry.get("deadline")
+                timeout = 10.0
+                if deadline:
                     try:
-                        BELIEF_HEURISTIC.belief.reset_for_match()
-                    except Exception:
-                        pass
+                        remaining = (int(deadline) - int(time.time() * 1000)) / 1000.0
+                    except (TypeError, ValueError):
+                        remaining = None
+                        print(f"deadline unparsable ({deadline!r}); using default timeout")
+                    if remaining is not None:
+                        if remaining < 2:
+                            print(f"deadline {remaining:.1f}s; posting best legal action anyway")
+                        timeout = max(2.0, min(10.0, remaining)) if remaining > 0 else 2.0
 
-            action = choose_action(entry, BELIEF_HEURISTIC)
-
-            if action is None:
-                legal = entry.get("legalActions") or []
-                if not legal:
-                    print(f"no legal action for {match_id} seq {seq}")
-                    continue
-                action = legal[0]
-
-            # Never skip near the deadline; post the best legal action.
-            deadline = entry.get("deadline")
-            timeout = 10.0
-            if deadline:
-                try:
-                    remaining = (int(deadline) - int(time.time() * 1000)) / 1000.0
-                except (TypeError, ValueError):
-                    remaining = None
-                if remaining is not None:
-                    if remaining < 2:
-                        print(f"deadline {remaining:.1f}s; posting best legal action anyway")
-                    timeout = max(2.0, min(10.0, remaining)) if remaining > 0 else 2.0
-
-            st, r = await api(
-                client,
-                "POST",
-                "/tcg/action",
-                api_key,
-                {"matchId": match_id, "seq": seq, "action": action},
-                timeout=timeout,
-            )
-            print(f"match {match_id[:8]} seq {seq} -> {action} : {st} {r}")
-
-            err = r.get("error") if isinstance(r, dict) else None
-            err_code = err.get("code") if isinstance(err, dict) else None
-            if st == 409 and err_code == "arena_transaction_busy":
-                retry_after = int(err.get("retryAfter", 1)) if isinstance(err, dict) else 1
-                await asyncio.sleep(max(1, retry_after))
-                await api(
+                await post_action(
                     client,
-                    "POST",
-                    "/tcg/action",
                     api_key,
-                    {"matchId": match_id, "seq": seq, "action": action},
+                    match_id,
+                    seq,
+                    action,
                     timeout=timeout,
+                    deadline_ms=deadline,
                 )
+            except Exception as exc:
+                # One malformed pending entry must never kill the loop.
+                print(f"pending entry failed: {exc!r}")
+                continue
 
         await asyncio.sleep(1)
 
