@@ -18,6 +18,39 @@ import math
 from collections import defaultdict, Counter
 from typing import Dict, List, Optional, Set, Tuple
 
+try:
+    from scoring import BASIC_ENERGY_IDS
+except ImportError:  # standalone import from another working directory
+    BASIC_ENERGY_IDS = frozenset(range(1, 9))
+
+
+def _obs_card_id(card) -> Optional[int]:
+    """Extract an arena card id from a card object or bare id."""
+    if isinstance(card, dict):
+        value = card.get("id", card.get("cardId"))
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return None
+    if isinstance(card, int):
+        return card
+    return None
+
+
+def _count_board_card(board: Counter, card: dict) -> None:
+    """Count a visible board card plus its public attachments/evolutions."""
+    card_id = _obs_card_id(card)
+    if card_id is not None:
+        board[card_id] += 1
+    for key in ("energyCards", "tools", "preEvolution"):
+        nested = card.get(key)
+        if not isinstance(nested, list):
+            continue
+        for item in nested:
+            nested_id = _obs_card_id(item)
+            if nested_id is not None:
+                board[nested_id] += 1
+
 
 class BeliefTracker:
     """Tracks probabilistic belief about opponent's hand.
@@ -41,6 +74,7 @@ class BeliefTracker:
             total_deck_size: Standard deck size (60).
         """
         self.archetype = dict(deck_archetype)
+        self._base_archetype = dict(deck_archetype)
         self.total_deck_size = total_deck_size
 
         # Public zones: card_id -> count
@@ -58,6 +92,9 @@ class BeliefTracker:
 
         # Observed draws (opponent drew N cards this turn cycle)
         self.draws_this_turn: int = 0
+
+        # True once sync_from_obs has established exact hidden-zone sizes.
+        self._synced: bool = False
 
     # ------------------------------------------------------------------ #
     # Public observation API
@@ -113,6 +150,88 @@ class BeliefTracker:
         self.deck_size = size
 
     # ------------------------------------------------------------------ #
+    # Arena observation sync (idempotent)
+    # ------------------------------------------------------------------ #
+
+    def reset_for_match(self) -> None:
+        """Clear per-match public/hidden state while keeping the deck prior."""
+        self.archetype = dict(self._base_archetype)
+        self.discard = Counter()
+        self.board = Counter()
+        self.prizes_taken = Counter()
+        self.prizes_remaining = 6
+        self.hand_size = 0
+        self.deck_size = self.total_deck_size
+        self.seen_played = set()
+        self.draws_this_turn = 0
+        self._synced = False
+
+    def sync_from_obs(self, obs: dict) -> bool:
+        """Sync belief to an arena observation snapshot.
+
+        Reads the real schema ``obs.current.players[1-yourIndex]`` and replaces
+        public-zone counts instead of incrementing them, so calling this once or
+        ten times with the same observation produces identical state.
+
+        Returns True when an opponent player record was found.
+        """
+        if not isinstance(obs, dict):
+            return False
+
+        current = obs.get("current")
+        if not isinstance(current, dict):
+            current = obs
+
+        players = current.get("players")
+        if not isinstance(players, list) or len(players) < 2:
+            return False
+
+        try:
+            your_index = int(current.get("yourIndex", obs.get("yourIndex", 0)) or 0)
+        except (TypeError, ValueError):
+            your_index = 0
+        opp_index = 0 if your_index == 1 else 1
+        opponent = players[opp_index]
+        if not isinstance(opponent, dict):
+            return False
+
+        def as_count(value) -> int:
+            try:
+                return max(0, int(value or 0))
+            except (TypeError, ValueError):
+                return 0
+
+        self.hand_size = as_count(opponent.get("handCount"))
+        self.deck_size = as_count(opponent.get("deckCount"))
+
+        prize = opponent.get("prize")
+        if isinstance(prize, list):
+            self.prizes_remaining = len(prize)
+
+        discard = opponent.get("discard")
+        if isinstance(discard, list):
+            self.discard = Counter(
+                cid for cid in (_obs_card_id(card) for card in discard) if cid is not None
+            )
+
+        board: Counter = Counter()
+        for zone_name in ("active", "bench"):
+            zone = opponent.get(zone_name)
+            if not isinstance(zone, list):
+                continue
+            for card in zone:
+                if not isinstance(card, dict):
+                    continue
+                _count_board_card(board, card)
+
+        self.board = board
+        self.seen_played.update(self.discard)
+        self.seen_played.update(self.board)
+        self.merge_archetype(self.infer_archetype_from_played())
+        self._synced = True
+        return True
+
+    # ------------------------------------------------------------------ #
     # Core belief computation
     # ------------------------------------------------------------------ #
 
@@ -127,7 +246,9 @@ class BeliefTracker:
         return max(0, total - accounted)
 
     def total_remaining_pool(self) -> int:
-        """Total cards in deck+hand not yet observed in public zones."""
+        """Total cards in deck+hand+prizes not yet observed in public zones."""
+        if self._synced:
+            return max(0, self.hand_size + self.deck_size + self.prizes_remaining)
         accounted = (
             sum(self.discard.values())
             + sum(self.board.values())
@@ -141,15 +262,15 @@ class BeliefTracker:
         Uses hypergeometric: P(at least 1 copy in hand of size h from pool of
         size N, where r copies of this card remain in the pool).
         """
-        h = self.hand_size
         N = self.total_remaining_pool()
+        h = min(self.hand_size, N)
 
         if h <= 0 or N <= 0:
             return {cid: 0.0 for cid in self.archetype}
 
         probs: Dict[int, float] = {}
         for card_id in self.archetype:
-            r = self.remaining_copies(card_id)
+            r = min(self.remaining_copies(card_id), N)
             if r <= 0:
                 probs[card_id] = 0.0
                 continue
@@ -174,10 +295,19 @@ class BeliefTracker:
         r = self.remaining_copies(card_id)
         return r * h / N
 
-    def top_threats(self, n: int = 5) -> List[Tuple[int, float]]:
-        """Return top-n cards by P(in hand), sorted descending."""
+    def top_threats(self, n: int = 5, exclude_energy: bool = True) -> List[Tuple[int, float]]:
+        """Return top-n non-energy cards by P(in hand), sorted descending.
+
+        Basic energy has 40 copies in the starter deck and always dominates the
+        raw probability list, so it is excluded from threat ranking by default.
+        """
         probs = self.hand_probabilities()
-        return sorted(probs.items(), key=lambda x: -x[1])[:n]
+        items = [
+            (cid, p)
+            for cid, p in probs.items()
+            if p > 0 and not (exclude_energy and cid in BASIC_ENERGY_IDS)
+        ]
+        return sorted(items, key=lambda x: -x[1])[:n]
 
     def is_likely_in_hand(self, card_id: int, threshold: float = 0.5) -> bool:
         """Quick check: is card_id likely in opponent's hand?"""
@@ -263,40 +393,15 @@ class BeliefTracker:
 # ------------------------------------------------------------------ #
 
 def build_tracker_from_obs(obs: dict, opponent_deck_archetype: Dict[int, int]) -> BeliefTracker:
-    """Build a BeliefTracker from arena observation.
+    """Build a BeliefTracker from a real arena observation.
 
-    The arena obs may include:
-    - obs["opponent"]["handSize"] or obs["opponentHandSize"]
-    - obs["opponent"]["deckSize"] or obs["opponentDeckSize"]
-    - obs["opponent"]["prizesRemaining"]
-    - obs["discard"] or obs["opponentDiscard"]
+    The arena obs exposes opponent state at
+    ``obs.current.players[1 - obs.current.yourIndex]`` with ``handCount``,
+    ``deckCount``, ``prize``, ``discard``, ``active`` and ``bench``.  Legacy
+    top-level keys are no longer read because they do not exist in remote play.
     """
     tracker = BeliefTracker(opponent_deck_archetype)
-
-    # Try to extract hand/deck/prize sizes from obs
-    opp = obs.get("opponent", {}) if isinstance(obs, dict) else {}
-    hand_size = opp.get("handSize", obs.get("opponentHandSize", 0)) if isinstance(obs, dict) else 0
-    deck_size = opp.get("deckSize", obs.get("opponentDeckSize", 60)) if isinstance(obs, dict) else 60
-    prizes = opp.get("prizesRemaining", obs.get("opponentPrizesRemaining", 6)) if isinstance(obs, dict) else 6
-
-    tracker.observe_hand_size(hand_size)
-    tracker.observe_deck_size(deck_size)
-    tracker.prizes_remaining = prizes
-
-    # Extract discard pile
-    discard = obs.get("discard", obs.get("opponentDiscard", [])) if isinstance(obs, dict) else []
-    if isinstance(discard, list):
-        for card_id in discard:
-            if isinstance(card_id, int):
-                tracker.observe_card(card_id, "discard")
-
-    # Extract opponent's board
-    board = obs.get("opponentBoard", obs.get("opponent", {}).get("board", [])) if isinstance(obs, dict) else []
-    if isinstance(board, list):
-        for card_id in board:
-            if isinstance(card_id, int):
-                tracker.observe_card(card_id, "board")
-
+    tracker.sync_from_obs(obs)
     return tracker
 
 

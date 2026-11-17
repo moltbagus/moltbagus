@@ -31,6 +31,7 @@ from typing import Dict, List, Optional, Tuple, Set
 from dataclasses import dataclass, field
 
 from belief import BeliefTracker
+from scoring import action_score
 
 
 @dataclass
@@ -94,129 +95,21 @@ class ISMCTSSearch:
         return scored[0][0]
 
     def _score_action(self, action: str, obs: dict, legal_actions: List[str]) -> float:
-        """Score a single legal action using belief-weighted heuristic."""
-        score = 0.0
+        """Score a legal action with card/board semantics.
 
-        # 1. Immediate damage
-        select = (obs.get("select") or {}) if isinstance(obs, dict) else {}
-        options = select.get("option") or []
-        idx = self._parse_index(action)
-        if idx is not None and 0 <= idx < len(options):
-            opt = options[idx] or {}
-            score += int(opt.get("damage") or 0) * 2.0  # damage is king
-
-        # 2. Belief-weighted threat assessment
-        # If opponent likely has a counter card (high threat prob), be defensive
-        threats = self.belief.top_threats(3)
-        max_threat_prob = threats[0][1] if threats else 0.0
-        # High threat → slight penalty for aggressive plays (prefer safe)
-        if max_threat_prob > 0.6:
-            score -= 5.0  # opponent likely has a counter
-
-        # 3. Prize trade value
-        # If this action takes a prize, bonus
-        opt_text = ""
-        if idx is not None and 0 <= idx < len(options):
-            opt_text = str((options[idx] or {}).get("text", "")).lower()
-        if "prize" in opt_text or "knock out" in opt_text:
-            score += 50.0  # taking prizes is very valuable
-
-        # 4. Safety: retreat when active is low HP
-        # (Heuristic: if legal action is a retreat and our active is damaged, bonus)
-        if "retreat" in action.lower() or (idx is not None and "retreat" in opt_text):
-            # Check if our active Pokemon is low HP
-            our_active_hp = self._get_our_active_hp(obs)
-            if our_active_hp is not None and our_active_hp < 60:
-                score += 30.0  # retreat when low HP
-
-        # 5. Prefer playing cards that set up future turns
-        if "play" in action.lower() or (idx is not None and "play" in opt_text):
-            score += 2.0
-
-        # 6. Avoid passing if we can attack
-        if action.lower() in ("pass", "end turn", "endturn"):
-            # Slight penalty for passing when we could do something
-            if len(legal_actions) > 1:
-                score -= 3.0
-
-        # 7. Belief: if opponent likely has Boss's Orders, avoid benching weak Pokémon
-        boss_prob = self.belief.hand_probabilities().get(0, 0.0)  # card 0 = unknown
-        # (This is a placeholder; real implementation would check for specific card IDs)
-
-        return score
-
-    def _parse_index(self, action: str) -> Optional[int]:
-        s = action.strip()
-        if s.startswith("[") and s.endswith("]"):
-            try:
-                return int(s[1:-1])
-            except ValueError:
-                return None
-        return None
-
-    def _get_our_active_hp(self, obs: dict) -> Optional[int]:
-        """Extract our active Pokemon's HP from obs if available."""
-        if not isinstance(obs, dict):
-            return None
-        # Try various obs formats
-        for key in ("activeHp", "ourActiveHp", "active_hp"):
-            if key in obs:
-                try:
-                    return int(obs[key])
-                except (ValueError, TypeError):
-                    pass
-        # Try nested
-        our = obs.get("our", {}) if isinstance(obs.get("our"), dict) else {}
-        for key in ("activeHp", "hp", "active_hp"):
-            if key in our:
-                try:
-                    return int(our[key])
-                except (ValueError, TypeError):
-                    pass
-        return None
+        Delegates to ``scoring.action_score``: the arena obs has no ``damage``
+        field, attacks carry ``attackId``, and multi-card selections use
+        ``[i,j]`` actions.  Belief is consulted only for defensive retreat value.
+        """
+        return action_score(action, obs, self.belief)
 
     def update_belief_from_obs(self, obs: dict, prev_obs: Optional[dict] = None):
-        """Update belief state based on new observation.
+        """Sync belief to the latest arena observation.
 
-        Call this after each poll to track opponent's public actions.
+        The tracker replaces public-zone snapshots, so this is safe to call
+        repeatedly.  ``prev_obs`` is accepted for backwards compatibility.
         """
-        if not isinstance(obs, dict):
-            return
-
-        # Extract opponent hand/deck/prize sizes
-        opp = obs.get("opponent", {}) if isinstance(obs.get("opponent"), dict) else {}
-        hand_size = opp.get("handSize", obs.get("opponentHandSize"))
-        deck_size = opp.get("deckSize", obs.get("opponentDeckSize"))
-        prizes = opp.get("prizesRemaining", obs.get("opponentPrizesRemaining"))
-
-        if hand_size is not None:
-            # Detect draws: if hand size increased, opponent drew
-            if self.belief.hand_size > 0 and hand_size > self.belief.hand_size:
-                self.belief.observe_draw(hand_size - self.belief.hand_size)
-            self.belief.observe_hand_size(hand_size)
-        if deck_size is not None:
-            self.belief.observe_deck_size(deck_size)
-        if prizes is not None:
-            self.belief.prizes_remaining = prizes
-
-        # Extract discard pile
-        discard = obs.get("discard", obs.get("opponentDiscard", []))
-        if isinstance(discard, list):
-            for card_id in discard:
-                if isinstance(card_id, int):
-                    self.belief.observe_card(card_id, "discard")
-
-        # Extract opponent board
-        board = obs.get("opponentBoard", opp.get("board", []))
-        if isinstance(board, list):
-            for card_id in board:
-                if isinstance(card_id, int):
-                    self.belief.observe_card(card_id, "board")
-
-        # Infer archetype from observed cards
-        inferred = self.belief.infer_archetype_from_played()
-        if inferred:
-            self.belief.merge_archetype(inferred)
+        self.belief.sync_from_obs(obs)
 
 
 class BeliefWeightedHeuristic:
@@ -230,14 +123,15 @@ class BeliefWeightedHeuristic:
         self.search = ISMCTSSearch(belief, time_budget_ms=time_budget_ms)
 
     def choose(self, obs: dict, legal_actions: List[str]) -> Optional[str]:
-        """Choose best legal action using belief-weighted search."""
+        """Choose best legal action using belief-weighted search.
+
+        The caller owns belief updates (one per decision point); this method
+        intentionally does not sync again.
+        """
         if not legal_actions:
             return None
         if len(legal_actions) == 1:
             return legal_actions[0]
-
-        # Update belief from obs before deciding
-        self.search.update_belief_from_obs(obs)
 
         return self.search.search(obs, legal_actions)
 

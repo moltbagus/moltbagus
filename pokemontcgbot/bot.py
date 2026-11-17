@@ -15,6 +15,8 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+from scoring import best_action
+
 # Belief tracking + ISMCTS search
 try:
     from belief import BeliefTracker, build_tracker_from_obs
@@ -97,16 +99,127 @@ def join(api_key):
     return status, resp
 
 
+def _read_state():
+    try:
+        data = json.loads(STATE_PATH.read_text())
+        return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
+
+
+def _write_state(updates=None):
+    """Merge updates into the persisted state file and write atomically."""
+    state = _read_state()
+    if updates:
+        state.update(updates)
+    tmp = Path(str(STATE_PATH) + ".tmp")
+    tmp.write_text(json.dumps(state, indent=2))
+    tmp.replace(STATE_PATH)
+
+
+def load_reported_matches():
+    """Match ids already handed to Ruflo, so restarts do not double-count."""
+    ids = _read_state().get("ruflo_reported_matches") or []
+    return {str(mid) for mid in ids if mid}
+
+
+def save_reported_matches(match_ids):
+    _write_state({"ruflo_reported_matches": sorted(match_ids)})
+
+
+def match_result_from_api(match, our_agent_id):
+    """Convert one /tcg/matches entry into a Ruflo MatchResult."""
+    if not isinstance(match, dict) or match.get("status") != "Settled":
+        return None
+    if not HAS_RUFLO:
+        return None
+
+    result_info = match.get("result") or {}
+    agent_result = match.get("agentResult") or {}
+    outcome = str(agent_result.get("outcome") or "").lower()
+    if not outcome:
+        winner = result_info.get("winnerAgentId")
+        outcome = "win" if winner == our_agent_id else "loss"
+    if outcome not in ("win", "loss", "forfeit", "timeout"):
+        outcome = "loss"
+
+    reason = str(result_info.get("reason") or "")
+    if outcome == "loss":
+        if "timeout" in reason or "deadline" in reason:
+            outcome = "timeout"
+        elif "forfeit" in reason:
+            outcome = "forfeit"
+
+    opponent = ""
+    for player in match.get("players") or []:
+        if isinstance(player, dict) and player.get("agentId") != our_agent_id:
+            opponent = str(player.get("handle") or player.get("name") or "")
+            break
+
+    try:
+        actions = int(match.get("playedActionCount") or 0)
+    except (TypeError, ValueError):
+        actions = 0
+
+    return MatchResult(
+        result=outcome,
+        opponent=opponent,
+        actions=actions,
+        deck_version="druddigon-v2",
+        heuristic="belief-ismcts",
+        notes=reason,
+    )
+
+
+def feed_ruflo_results(api_key, agent_id, ruflo, reported):
+    """Poll recent matches and record newly settled ones in Ruflo."""
+    if ruflo is None or not HAS_RUFLO:
+        return 0
+    status, resp = api(
+        "GET",
+        f"/tcg/matches?competitionId={COMPETITION_ID}&agentId={agent_id}&limit=10",
+        api_key,
+        timeout=10,
+    )
+    if status != 200 or not isinstance(resp, dict):
+        return 0
+
+    added = 0
+    for match in resp.get("matches") or []:
+        result = match_result_from_api(match, agent_id)
+        if result is None:
+            continue
+        match_id = match.get("matchId")
+        if not match_id or match_id in reported:
+            continue
+        try:
+            ruflo.observe_match(result)
+            reported.add(match_id)
+            added += 1
+        except Exception as exc:
+            print(f"ruflo observe_match failed for {match_id[:8]}: {exc}")
+    if added:
+        save_reported_matches(reported)
+        print(f"ruflo: recorded {added} settled match(es)")
+    return added
+
+
+def error_code(resp):
+    """Return an arena error code from either a dict or a plain string error."""
+    if not isinstance(resp, dict):
+        return None
+    err = resp.get("error")
+    return err.get("code") if isinstance(err, dict) else None
+
+
 def choose_action(pending_entry, belief_heuristic=None):
     legal = pending_entry.get("legalActions") or []
     if not legal:
         return None
-    if len(legal) == 1:
-        return legal[0]
 
-    obs = (pending_entry.get("obs") or {})
+    obs = pending_entry.get("obs") or {}
 
-    # Use belief-weighted heuristic if available
+    # Single belief-update path for every decision point.
     if belief_heuristic is not None and HAS_BELIEF:
         try:
             belief_heuristic.search.update_belief_from_obs(obs)
@@ -114,37 +227,26 @@ def choose_action(pending_entry, belief_heuristic=None):
             pass
         try:
             result = belief_heuristic.choose(obs, legal)
-            if result is not None:
+            if result in legal:
                 return result
         except Exception:
             pass
 
-    # Fallback: original damage-based heuristic
-    select = obs.get("select") or {}
-    options = select.get("option") or []
-    best = None
-    best_score = None
-    for act in legal:
-        idx = None
-        s = act.strip()
-        if s.startswith("[") and s.endswith("]"):
-            try:
-                idx = int(s[1:-1])
-            except ValueError:
-                idx = None
-        score = 0
-        if idx is not None and 0 <= idx < len(options):
-            opt = options[idx] or {}
-            score += int(opt.get("damage") or 0)
-        if best_score is None or score > best_score:
-            best_score = score
-            best = act
-    return best or legal[0]
+    # Card-aware fallback (the obs has no damage field; options use type/attackId).
+    chosen = best_action(obs, legal)
+    return chosen if chosen is not None else legal[0]
 
 
-def play_loop(api_key, ruflo=None):
+def play_loop(api_key, agent_id, ruflo=None):
     print("Entering play loop. Ctrl+C to stop.")
+    current_match = None
+    last_rejoin = 0.0
+    last_results_poll = 0.0
+    reported = load_reported_matches() if (ruflo is not None and HAS_RUFLO) else set()
+
     while True:
+        now = time.time()
+
         status, resp = api("GET", f"/tcg/pending-actions?competitionId={COMPETITION_ID}", api_key)
         if status != 200 or not isinstance(resp, dict):
             print(f"pending-actions error {status}: {resp}")
@@ -153,45 +255,91 @@ def play_loop(api_key, ruflo=None):
         pending = resp.get("pending") or []
         active = resp.get("activeMatches") or []
         if not pending:
+            # Only poll results while there is no decision to answer, so the
+            # extra request can never eat an action deadline.
+            if ruflo is not None and HAS_RUFLO and now - last_results_poll >= 15:
+                try:
+                    feed_ruflo_results(api_key, agent_id, ruflo, reported)
+                except Exception as exc:
+                    print(f"ruflo result poll failed: {exc}")
+                last_results_poll = now
+
             if active:
                 print(f"opponent acting; activeMatches={len(active)}")
             else:
-                print("queued, waiting for opponent...")
-                # re-join to keep queue position
-                join(api_key)
+                current_match = None
+                # Keep queue position by re-joining; idempotent on the arena.
+                if now - last_rejoin >= 10:
+                    join(api_key)
+                    last_rejoin = now
+                else:
+                    print("queued, waiting for opponent (re-join throttled)")
             time.sleep(2)
             continue
 
         for entry in pending:
             match_id = entry["matchId"]
             seq = entry["seq"]
-            deadline = entry.get("deadline")
+
+            # One opponent belief per match; snapshots are idempotent.
+            if match_id != current_match:
+                current_match = match_id
+                if BELIEF_HEURISTIC is not None and HAS_BELIEF:
+                    try:
+                        BELIEF_HEURISTIC.belief.reset_for_match()
+                    except Exception:
+                        pass
+
             action = choose_action(entry, BELIEF_HEURISTIC)
             if action is None:
-                print(f"no legal action for {match_id} seq {seq}")
-                continue
-            # deadline safety: if <3s left, still post best legal
-            if deadline:
-                remaining = (deadline - int(time.time() * 1000)) / 1000.0
-                if remaining < 1:
-                    print(f"deadline too close ({remaining:.1f}s); skipping")
+                legal = entry.get("legalActions") or []
+                if not legal:
+                    print(f"no legal action for {match_id} seq {seq}")
                     continue
-            st, r = api("POST", "/tcg/action", api_key, {"matchId": match_id, "seq": seq, "action": action})
-            print(f"match {match_id[:8]} seq {seq} -> {action} : {st} {r}")
-            # Record decision in ruflo if available
-            if ruflo is not None and HAS_RUFLO:
+                action = legal[0]
+
+            # Never forfeit by skipping: post the best legal action even when
+            # the deadline is close.  Shrink the HTTP timeout to fit what is left.
+            deadline = entry.get("deadline")
+            timeout = 10.0
+            if deadline:
                 try:
-                    ruflo.state.apply_count += 0  # track decisions
-                except Exception:
-                    pass
-            if st == 409 and isinstance(r, dict) and r.get("error", {}).get("code") == "arena_transaction_busy":
+                    remaining = (int(deadline) - int(time.time() * 1000)) / 1000.0
+                except (TypeError, ValueError):
+                    remaining = None
+                if remaining is not None:
+                    if remaining < 2:
+                        print(f"deadline {remaining:.1f}s; posting best legal action anyway")
+                    timeout = max(2.0, min(10.0, remaining)) if remaining > 0 else 2.0
+
+            st, r = api(
+                "POST",
+                "/tcg/action",
+                api_key,
+                {"matchId": match_id, "seq": seq, "action": action},
+                timeout=timeout,
+            )
+            print(f"match {match_id[:8]} seq {seq} -> {action} : {st} {r}")
+
+            err_code = error_code(r)
+            err = r.get("error") if isinstance(r, dict) else None
+            if st == 409 and err_code == "arena_transaction_busy":
                 retry_after = 1
                 try:
-                    retry_after = int(r.get("error", {}).get("retryAfter", 1))
+                    retry_after = int(err.get("retryAfter", 1)) if isinstance(err, dict) else 1
                 except Exception:
                     pass
                 time.sleep(max(1, retry_after))
-                api("POST", "/tcg/action", api_key, {"matchId": match_id, "seq": seq, "action": action})
+                api(
+                    "POST",
+                    "/tcg/action",
+                    api_key,
+                    {"matchId": match_id, "seq": seq, "action": action},
+                    timeout=timeout,
+                )
+            elif st == 409 and err_code == "action_conflict":
+                # Another action already won this seq; re-poll instead of crashing.
+                print(f"seq {seq} already answered; continuing")
         time.sleep(1)
 
 
@@ -235,7 +383,7 @@ def main():
 
     # persist state
     try:
-        STATE_PATH.write_text(json.dumps({
+        _write_state({
             "competition_id": COMPETITION_ID,
             "season_number": 6,
             "deck": DECK,
@@ -247,11 +395,11 @@ def main():
             "matches_won": 0,
             "decisions_answered": 0,
             "forfeits": 0,
-        }, indent=2))
+        })
     except Exception as e:
         print(f"state write failed: {e}")
 
-    play_loop(api_key, ruflo=RUFLO)
+    play_loop(api_key, creds["agentId"], ruflo=RUFLO)
 
 
 if __name__ == "__main__":
