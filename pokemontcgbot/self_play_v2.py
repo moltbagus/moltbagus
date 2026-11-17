@@ -72,17 +72,21 @@ class HeuristicPolicy(Policy):
         opp_active_hp = 999
         opp_active_is_ex = False
         energy_attached = False
+        active_energy_count = 0
+        active_attack_cost = 0
 
         if me is not None:
-            bench_count = len(me.bench) if hasattr(me, "bench") and me.bench else 0
-            active = me.active if hasattr(me, "active") else None
+            bench = getattr(me, "bench", None)
+            bench_count = len(bench) if bench else 0
+            active = getattr(me, "active", None)
             if active is not None:
                 active_hp = getattr(active, "hp", 0) or 0
                 active_max_hp = getattr(active, "maxHp", 1) or 1
+                active_energy_count = len(getattr(active, "energy", []) or [])
             energy_attached = getattr(me, "energy_attached_this_turn", False)
 
         if opp is not None:
-            opp_active = opp.active if hasattr(opp, "active") else None
+            opp_active = getattr(opp, "active", None)
             if opp_active is not None:
                 opp_active_hp = getattr(opp_active, "hp", 999) or 999
                 opp_active_is_ex = getattr(opp_active, "is_ex", False)
@@ -107,10 +111,15 @@ class HeuristicPolicy(Policy):
         if supporters:
             return supporters[0]
 
-        # 5. Energy attachment (only if not already attached)
+        # 5. Energy attachment (only if not already attached, and active needs energy)
         energies = [a for a in actions if a.actionType == ActionType.ATTACH_ENERGY_ACTION]
         if energies and not energy_attached:
-            return energies[0]
+            # Check if active needs energy for its cheapest attack
+            if active_energy_count == 0 or active_attack_cost > active_energy_count:
+                return energies[0]
+            # If bench Pokemon need energy, attach to them
+            if bench_count > 0:
+                return energies[0]
 
         # 6. Attacks: prefer KO, then prize value (ex = 2 prizes)
         attacks = [a for a in actions if a.actionType == ActionType.ATTACK_ACTION]
@@ -120,14 +129,18 @@ class HeuristicPolicy(Policy):
                 dmg = getattr(a, "damage", 0) or 0
                 if hasattr(a, "attack") and hasattr(a.attack, "damage"):
                     dmg = a.attack.damage or dmg
-                ko_bonus = 1000 if dmg >= opp_active_hp else 0
-                prize_bonus = 500 if opp_active_is_ex else 0
-                # Prize differential bonus
+                # KO bonus: prefer attacks that knock out
+                ko_bonus = 2000 if dmg >= opp_active_hp and opp_active_hp > 0 else 0
+                # Prize value: ex/Mega = 2 prizes
+                prize_value = 2 if opp_active_is_ex else 1
+                prize_bonus = prize_value * 500
+                # Prize differential: prefer taking prizes when behind
                 prize_diff = 0
                 if me and opp:
                     my_prizes = getattr(me, "prizes", 6)
                     opp_prizes = getattr(opp, "prizes", 6)
-                    prize_diff = (6 - opp_prizes) - (6 - my_prizes)
+                    if isinstance(my_prizes, int) and isinstance(opp_prizes, int):
+                        prize_diff = (6 - opp_prizes) - (6 - my_prizes)
                 scored.append((a, dmg + ko_bonus + prize_bonus + prize_diff * 100))
             scored.sort(key=lambda x: -x[1])
             return scored[0][0]
