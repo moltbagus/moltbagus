@@ -46,13 +46,25 @@ def test_multi_card_selection_prefers_completing_selection():
     assert best_action(obs, ["[]", "[0]", "[1]", "[0,1]"]) == "[0,1]"
 
 
-def test_low_hp_active_retreats():
+def test_low_hp_active_retreats_with_charged_bench():
     obs = make_obs(
         [{"type": 12}, {"type": 14}],
         our_hp=20,
         our_max_hp=120,
     )
+    obs["current"]["players"][0]["bench"] = [
+        {"id": 328, "hp": 190, "maxHp": 190, "energies": [1]}
+    ]
     assert best_action(obs, ["[0]", "[1]"]) == "[0]"
+
+
+def test_low_hp_active_passes_without_charged_bench():
+    obs = make_obs(
+        [{"type": 12}, {"type": 14}],
+        our_hp=20,
+        our_max_hp=120,
+    )
+    assert best_action(obs, ["[0]", "[1]"]) == "[1]"
 
 
 def test_heuristic_choose_does_not_update_belief_twice():

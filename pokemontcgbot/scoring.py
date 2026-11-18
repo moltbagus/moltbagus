@@ -229,14 +229,21 @@ def option_score(option: Any, obs: Any, belief: Any = None) -> float:
     if option_type == OPTION_ABILITY:
         return 20.0
     if option_type == OPTION_RETREAT:
-        score = 5.0
+        score = -30.0
         active = our_active(obs)
         if isinstance(active, dict):
             try:
                 hp = float(active.get("hp", 0))
                 max_hp = float(active.get("maxHp", 0))
-                if max_hp > 0 and hp / max_hp <= 0.5:
-                    score += 30.0
+                if max_hp > 0 and hp / max_hp <= 0.35:
+                    players = players_of(obs)
+                    yi = your_index(obs)
+                    bench = players[yi].get("bench") if 0 <= yi < len(players) else None
+                    if isinstance(bench, list) and any(
+                        isinstance(card, dict) and card.get("energies")
+                        for card in bench
+                    ):
+                        score = 10.0
             except (TypeError, ValueError):
                 pass
         if belief is not None:

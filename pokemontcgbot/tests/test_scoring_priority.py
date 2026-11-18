@@ -69,6 +69,26 @@ def test_attach_priority_disabled_after_attachment():
     assert best_action(obs, ["[0]", "[1]"]) == "[1]"
 
 
+def test_retreat_guard_passes_with_healthy_active():
+    obs = _obs(
+        {"type": 0, "option": [{"type": 12}, {"type": 14}]},
+        energy_attached=True,
+        active=[{"id": 390, "hp": 130, "maxHp": 130, "energies": []}],
+        bench=[{"id": 328, "hp": 190, "maxHp": 190, "energies": [1, 1]}],
+    )
+    assert best_action(obs, ["[0]", "[1]"]) == "[1]"
+
+
+def test_retreat_allowed_with_low_hp_and_charged_bench():
+    obs = _obs(
+        {"type": 0, "option": [{"type": 12}, {"type": 14}]},
+        energy_attached=True,
+        active=[{"id": 390, "hp": 40, "maxHp": 130, "energies": []}],
+        bench=[{"id": 328, "hp": 190, "maxHp": 190, "energies": [1]}],
+    )
+    assert best_action(obs, ["[0]", "[1]"]) == "[0]"
+
+
 def test_promotion_prefers_highest_hp_bench():
     obs = _obs(
         {
