@@ -9,7 +9,9 @@ Run: python3 bot.py            (join + play loop)
      python3 bot.py --join-only (join then exit)
 """
 import argparse
+import fcntl
 import json
+import os
 import time
 import urllib.error
 import urllib.request
@@ -36,6 +38,7 @@ CREDS_PATH = Path.home() / ".arena-credentials"
 COMPETITION_ID = "cmw99opb57gssgfb7rj39a1o1"
 BASE_URL = "https://arena.dev.fun/api/arena"
 STATE_PATH = Path.home() / ".arena-tcg-state"
+LOCK_PATH = Path.home() / ".arena-tcg.lock"
 
 # Keep every non-action request short so a slow poll cannot eat a match deadline.
 PENDING_TIMEOUT = 3.0
@@ -59,6 +62,22 @@ def load_creds():
     if not d.get("apiKey") or not d.get("agentId"):
         raise SystemExit("Invalid credentials file")
     return d
+
+
+def acquire_single_instance_lock(path=None):
+    """Refuse to run a second poller for the same agent/competition."""
+    lock_path = Path(path) if path is not None else LOCK_PATH
+    handle = open(lock_path, "w")
+    try:
+        fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        handle.close()
+        raise SystemExit(
+            f"another TCG bot poller is already running (lock: {lock_path})"
+        )
+    handle.write(str(os.getpid()))
+    handle.flush()
+    return handle
 
 
 def api(method, path, api_key=None, body=None, timeout=30):
@@ -359,6 +378,7 @@ def main():
     parser.add_argument("--join-only", action="store_true")
     args = parser.parse_args()
 
+    acquire_single_instance_lock()
     validate_deck(DECK)
     creds = load_creds()
     api_key = creds["apiKey"]

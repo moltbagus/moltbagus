@@ -37,6 +37,7 @@ except ImportError:
 # Shared action selection + Ruflo result mapping (single implementation).
 from bot import (
     _write_state,
+    acquire_single_instance_lock,
     choose_action,
     match_result_from_api,
     load_reported_matches,
@@ -323,6 +324,7 @@ async def main():
     parser.add_argument("--join-only", action="store_true")
     args = parser.parse_args()
 
+    acquire_single_instance_lock()
     validate_deck(DECK)
     creds = load_creds()
     api_key = creds["apiKey"]
