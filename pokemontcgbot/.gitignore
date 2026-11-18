@@ -40,3 +40,5 @@ htmlcov/
 evidence/
 .agent-team/runs/
 *.log
+# ptcg-engine game recorder output
+battle_log/

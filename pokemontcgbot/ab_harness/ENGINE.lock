@@ -1,0 +1,18 @@
+{
+  "engine": "ptcg-engine",
+  "repo": "https://github.com/gemelom/ptcg-engine",
+  "local_path": "~/ptcg-lab",
+  "commit": "92c3cc4fe85a26f102d7bb6b3e8be7678512d2e5",
+  "commit_subject": "Merge pull request #3 from gemelom/codex/interactive-cli",
+  "commit_date": "2026-08-29T00:15:56+08:00",
+  "python": "3.12.3",
+  "venv": "~/ptcg-lab/.venv",
+  "install": "uv venv ~/ptcg-lab/.venv --python 3.12 && uv pip install --python ~/ptcg-lab/.venv/bin/python -e ~/ptcg-lab pytest",
+  "dependencies": {
+    "loguru": "0.8.0",
+    "rich": "15.0.0",
+    "pytest": "9.2.0"
+  },
+  "verified_import": "from ptcg.core.envs import PokemonTCG",
+  "verified_at": "2026-11-18"
+}
