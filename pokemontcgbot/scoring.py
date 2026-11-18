@@ -312,6 +312,20 @@ def best_attach_action(obs: Any, legal_actions: Sequence[str]) -> Optional[str]:
         if card is not None:
             try:
                 score += float(card.get("maxHp") or card.get("hp") or 0) / 10.0
+                score += len(card.get("energies") or []) * 8.0
+            except (TypeError, ValueError):
+                pass
+        active = our_active(obs)
+        try:
+            active_max_hp = float(active.get("maxHp") or 0) if active else 0.0
+        except (TypeError, ValueError):
+            active_max_hp = 0.0
+        if target_area == 5 and card is not None and active_max_hp and active_max_hp < 180:
+            try:
+                if float(card.get("maxHp") or 0) >= 180:
+                    # Build a high-HP bench attacker while the fragile active
+                    # is likely to be knocked out before it can use the energy.
+                    score += 60.0
             except (TypeError, ValueError):
                 pass
         attach.append((score, action))

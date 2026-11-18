@@ -20,7 +20,7 @@ def _obs(select, *, energy_attached=False, active=None, bench=None):
     }
 
 
-def test_attach_outranks_nonlethal_attack():
+def test_attach_prefers_healthy_bench_when_active_fragile():
     obs = _obs(
         {
             "type": 0,
@@ -35,7 +35,23 @@ def test_attach_outranks_nonlethal_attack():
         bench=[{"id": 328, "hp": 190, "maxHp": 190, "energies": []}],
     )
     legal = ["[0]", "[1]", "[2]", "[3]"]
-    assert best_action(obs, legal) == "[0]"
+    assert best_action(obs, legal) == "[1]"
+
+
+def test_attach_stays_active_when_active_is_high_hp():
+    obs = _obs(
+        {
+            "type": 0,
+            "option": [
+                {"type": 8, "area": 2, "index": 0, "inPlayArea": 4, "inPlayIndex": 0},
+                {"type": 8, "area": 2, "index": 0, "inPlayArea": 5, "inPlayIndex": 0},
+                {"type": 13, "attackId": 456},
+            ],
+        },
+        active=[{"id": 328, "hp": 190, "maxHp": 190, "energies": []}],
+        bench=[{"id": 390, "hp": 120, "maxHp": 130, "energies": []}],
+    )
+    assert best_action(obs, ["[0]", "[1]", "[2]"]) == "[0]"
 
 
 def test_attach_priority_disabled_after_attachment():
