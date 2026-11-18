@@ -60,6 +60,7 @@ DECK = [625] * 4 + [328] * 4 + [299] * 4 + [39] * 4 + [390] * 4 + [1] * 40
 # Global instances
 BELIEF_HEURISTIC = None
 RUFLO = None
+_LOCK_HANDLE = None
 
 
 def load_creds():
@@ -318,13 +319,13 @@ async def play_loop(client, api_key, agent_id, ruflo=None):
 
 
 async def main():
-    global BELIEF_HEURISTIC, RUFLO
+    global BELIEF_HEURISTIC, RUFLO, _LOCK_HANDLE
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--join-only", action="store_true")
     args = parser.parse_args()
 
-    acquire_single_instance_lock()
+    _LOCK_HANDLE = acquire_single_instance_lock()
     validate_deck(DECK)
     creds = load_creds()
     api_key = creds["apiKey"]

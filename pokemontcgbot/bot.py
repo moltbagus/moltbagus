@@ -48,6 +48,7 @@ RESULTS_TIMEOUT = 5.0
 # Global instances (initialized in main)
 BELIEF_HEURISTIC = None
 RUFLO = None
+_LOCK_HANDLE = None
 
 # Mixed high-HP, 0-energy attackers + Grass Energy.
 # 4x Druddigon(625) HP120 40dmg, 4x Pikachu ex(328) HP190 30dmg,
@@ -372,13 +373,13 @@ def play_loop(api_key, agent_id, ruflo=None):
 
 
 def main():
-    global BELIEF_HEURISTIC, RUFLO
+    global BELIEF_HEURISTIC, RUFLO, _LOCK_HANDLE
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--join-only", action="store_true")
     args = parser.parse_args()
 
-    acquire_single_instance_lock()
+    _LOCK_HANDLE = acquire_single_instance_lock()
     validate_deck(DECK)
     creds = load_creds()
     api_key = creds["apiKey"]
