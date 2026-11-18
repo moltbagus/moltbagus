@@ -35,3 +35,8 @@ Thumbs.db
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Agent team runtime
+evidence/
+.agent-team/runs/
+*.log
