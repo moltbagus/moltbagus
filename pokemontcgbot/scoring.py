@@ -147,6 +147,12 @@ def _card_id(card: Any) -> Optional[int]:
 
 def _card_at(obs: Any, player_index: int, area: Any, index: Any) -> Optional[int]:
     """Resolve a select option to a card id when the referenced zone is visible."""
+    card = _zone_card_at(obs, player_index, area, index)
+    return _card_id(card) if card is not None else None
+
+
+def _zone_card_at(obs: Any, player_index: int, area: Any, index: Any) -> Optional[dict]:
+    """Resolve a select option to the visible card object, when one exists."""
     try:
         area = int(area)
         index = int(index)
@@ -156,8 +162,8 @@ def _card_at(obs: Any, player_index: int, area: Any, index: Any) -> Optional[int
     current = obs.get("current") if isinstance(obs, dict) else None
     if area == 7:
         stadium = (current or {}).get("stadium") or []
-        if 0 <= index < len(stadium):
-            return _card_id(stadium[index])
+        if 0 <= index < len(stadium) and isinstance(stadium[index], dict):
+            return stadium[index]
         return None
 
     players = players_of(obs)
@@ -178,7 +184,8 @@ def _card_at(obs: Any, player_index: int, area: Any, index: Any) -> Optional[int
     zone = player.get(zone_name)
     if not isinstance(zone, list) or not 0 <= index < len(zone):
         return None
-    return _card_id(zone[index])
+    card = zone[index]
+    return card if isinstance(card, dict) else None
 
 
 def _option_card_id(option: dict, obs: Any) -> Optional[int]:
@@ -245,13 +252,74 @@ def option_score(option: Any, obs: Any, belief: Any = None) -> float:
     if option_type == OPTION_CHOOSE_CARD:
         score = 10.0
         card_id = _option_card_id(option, obs)
-        if card_id in BASIC_ENERGY_IDS:
+        player_index = option.get("playerIndex")
+        try:
+            player_index = int(player_index) if player_index is not None else your_index(obs)
+        except (TypeError, ValueError):
+            player_index = your_index(obs)
+        card = _zone_card_at(obs, player_index, option.get("area"), option.get("index"))
+        if card is not None:
+            try:
+                hp = float(card.get("hp") or card.get("maxHp") or 0)
+                max_hp = float(card.get("maxHp") or hp)
+                energies = len(card.get("energies") or [])
+                score = 10.0 + hp / 10.0 + max_hp / 20.0 + energies * 8.0
+            except (TypeError, ValueError):
+                pass
+        elif card_id in BASIC_ENERGY_IDS:
             score -= 5.0
         elif card_id in CARD_HP:
-            score += 5.0
+            score += CARD_HP[card_id] / 10.0
         return score
     # Setup choices (coin flip / first player) and unknown option types.
     return 10.0
+
+
+def _energy_attached(obs: Any) -> bool:
+    current = obs.get("current") if isinstance(obs, dict) else None
+    if not isinstance(current, dict):
+        return False
+    return bool(current.get("energyAttached", False))
+
+
+def best_attach_action(obs: Any, legal_actions: Sequence[str]) -> Optional[str]:
+    """Choose the best energy-attach option, preferring the active Pokémon.
+
+    Attaching does not end the turn, so when the turn's attachment is still
+    available it must happen before an attack; the attack remains legal after.
+    """
+    options = select_of(obs).get("option") or []
+    attach: List[tuple[float, str]] = []
+    for action in legal_actions:
+        indices = parse_action_indices(action)
+        if len(indices) != 1:
+            continue
+        index = indices[0]
+        if not 0 <= index < len(options):
+            continue
+        option = options[index]
+        if not isinstance(option, dict) or option.get("type") != OPTION_ATTACH:
+            continue
+
+        score = 0.0
+        target_area = option.get("inPlayArea")
+        target_index = option.get("inPlayIndex")
+        if target_area == 4:
+            score += 100.0  # active Pokémon
+        elif target_area == 5:
+            score += 50.0   # bench
+        card = _zone_card_at(obs, your_index(obs), target_area, target_index)
+        if card is not None:
+            try:
+                score += float(card.get("maxHp") or card.get("hp") or 0) / 10.0
+            except (TypeError, ValueError):
+                pass
+        attach.append((score, action))
+
+    if not attach:
+        return None
+    attach.sort(key=lambda item: -item[0])
+    return attach[0][1]
 
 
 def action_score(action: Any, obs: Any, belief: Any = None) -> float:
@@ -275,6 +343,11 @@ def best_action(obs: Any, legal_actions: Sequence[str], belief: Any = None) -> O
         return None
     if len(legal) == 1:
         return legal[0]
+    # Attach first: it does not end the turn, and the attack remains available.
+    if not _energy_attached(obs):
+        attach = best_attach_action(obs, legal)
+        if attach is not None:
+            return attach
     best = legal[0]
     best_score = action_score(best, obs, belief)
     for action in legal[1:]:
