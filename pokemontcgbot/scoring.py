@@ -29,6 +29,19 @@ ATTACK_DAMAGE: Dict[int, int] = {
     545: 30,   # Tauros - Horn Attack
     546: 50,   # Tauros - Clean Hit
     323: 10,   # Budew - Itchy Pollen
+    # S7 Audino / Alakazam / Dunsparce / Fezandipiti deck
+    1070: 10,  # Abra - Teleportation Attack
+    1071: 30,  # Kadabra - Super Psy Bolt
+    338: 0,    # Alakazam - Strange Hacking (confuse/move damage)
+    339: 10,   # Alakazam - Psychic (base; +50 per opponent energy)
+    423: 0,    # Dunsparce - Trading Places (switch)
+    424: 20,   # Dunsparce - Ram
+    425: 0,    # Dudunsparce ex - Tenacious Tail (60 per opponent ex)
+    426: 150,  # Dudunsparce ex - Destructive Drill
+    183: 100,  # Fezandipiti ex - Cruel Arrow (bench snipe)
+    791: 30,   # Audino - Return
+    1453: 0,   # Mega Audino ex - Kaleidowaltz (energy acceleration)
+    1454: 20,  # Mega Audino ex - Ear Force (base; +80 per opponent energy)
 }
 
 # hp for cards we can identify in our own deck/board.  Opponent board cards
@@ -40,6 +53,14 @@ CARD_HP: Dict[int, int] = {
     39: 120,
     390: 130,
     235: 30,
+    741: 50,
+    742: 80,
+    245: 140,
+    305: 70,
+    306: 270,
+    140: 210,
+    1006: 270,
+    554: 100,
 }
 
 # Select option type codes observed in arena decision logs.

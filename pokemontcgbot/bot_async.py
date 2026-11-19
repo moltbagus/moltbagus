@@ -45,7 +45,7 @@ from bot import (
 )
 
 CREDS_PATH = Path.home() / ".arena-credentials"
-COMPETITION_ID = "cmw99opb57gssgfb7rj39a1o1"
+COMPETITION_ID = "cmwm3cekx011nln01c3gqi0tc"
 BASE_URL = "https://arena.dev.fun/api/arena"
 STATE_PATH = Path.home() / ".arena-tcg-state"
 
@@ -55,7 +55,20 @@ JOIN_TIMEOUT = 5.0
 RESULTS_TIMEOUT = 5.0
 
 # New high-HP deck (will be locked on first join — use sandbox for changes)
-DECK = [625] * 4 + [328] * 4 + [299] * 4 + [39] * 4 + [390] * 4 + [1] * 40
+# S7 deck: Alakazam / Dudunsparce / Fezandipiti with the Audino package.
+DECK = (
+    [741] * 3 + [742] * 2 + [245] * 2
+    + [305] * 3 + [306] * 2
+    + [140] * 2
+    + [1006] * 2 + [554] * 2
+    + [1086] * 4 + [1152] * 4
+    + [1231] * 3 + [1182] * 3
+    + [1097] * 3 + [1198] * 3
+    + [1197] * 3 + [1081] * 3
+    + [1129] * 2 + [1266] * 2
+    + [5] * 12
+)
+BASIC_POKEMON_IDS = {741, 305, 140, 1006, 554, 625, 328, 299, 39, 390}
 
 # Global instances
 BELIEF_HEURISTIC = None
@@ -181,7 +194,7 @@ def validate_deck(deck):
     counts = Counter(x for x in deck if x not in energy_ids)
     bad = {k: v for k, v in counts.items() if v > 4}
     assert not bad, f"copy limit exceeded: {bad}"
-    assert any(c in deck for c in (625, 328, 299, 39, 390)), "need at least one Basic Pokemon"
+    assert any(c in deck for c in BASIC_POKEMON_IDS), "need at least one Basic Pokemon"
     return True
 
 
@@ -335,7 +348,7 @@ async def main():
     # Initialize belief tracker
     if HAS_BELIEF:
         try:
-            archetype = {625: 4, 328: 4, 299: 4, 39: 4, 390: 4, 1: 40}
+            archetype = {}  # infer opponent archetype from observed cards only
             tracker = create_belief_tracker(archetype)
             BELIEF_HEURISTIC = BeliefWeightedHeuristic(tracker, time_budget_ms=1000)
             print("Belief tracker + ISMCTS heuristic: ENABLED")

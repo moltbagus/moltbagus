@@ -35,7 +35,7 @@ except ImportError:
     HAS_RUFLO = False
 
 CREDS_PATH = Path.home() / ".arena-credentials"
-COMPETITION_ID = "cmw99opb57gssgfb7rj39a1o1"
+COMPETITION_ID = "cmwm3cekx011nln01c3gqi0tc"
 BASE_URL = "https://arena.dev.fun/api/arena"
 STATE_PATH = Path.home() / ".arena-tcg-state"
 LOCK_PATH = Path.home() / ".arena-tcg.lock"
@@ -50,11 +50,21 @@ BELIEF_HEURISTIC = None
 RUFLO = None
 _LOCK_HANDLE = None
 
-# Mixed high-HP, 0-energy attackers + Grass Energy.
-# 4x Druddigon(625) HP120 40dmg, 4x Pikachu ex(328) HP190 30dmg,
-# 4x Hop's Zacian ex(299) HP230 30dmg, 4x Enamorus(39) HP120 30dmg,
-# 4x Tauros(390) HP130 30dmg, 40x Basic {G} Energy(1) = 60 cards.
-DECK = [625] * 4 + [328] * 4 + [299] * 4 + [39] * 4 + [390] * 4 + [1] * 40
+# S7 deck: Alakazam / Dudunsparce / Fezandipiti with the Audino package.
+# 18 Pokemon + 30 Trainers + 12 Basic Psychic Energy = 60.
+DECK = (
+    [741] * 3 + [742] * 2 + [245] * 2      # Abra / Kadabra / Alakazam
+    + [305] * 3 + [306] * 2                 # Dunsparce / Dudunsparce ex
+    + [140] * 2                             # Fezandipiti ex
+    + [1006] * 2 + [554] * 2                # Mega Audino ex / Audino
+    + [1086] * 4 + [1152] * 4               # Buddy-Buddy Poffin / Poke Pad
+    + [1231] * 3 + [1182] * 3              # Dawn / Boss's Orders
+    + [1097] * 3 + [1198] * 3              # Night Stretcher / Crispin
+    + [1197] * 3 + [1081] * 3              # Xerosic's Machinations / Enhanced Hammer
+    + [1129] * 2 + [1266] * 2              # Sacred Ash / Nighttime Mine
+    + [5] * 12                              # Basic Psychic Energy
+)
+BASIC_POKEMON_IDS = {741, 305, 140, 1006, 554, 625, 328, 299, 39, 390}
 
 
 def load_creds():
@@ -108,13 +118,12 @@ def api(method, path, api_key=None, body=None, timeout=30):
 def validate_deck(deck):
     assert len(deck) == 60, f"deck must be 60 cards, got {len(deck)}"
     from collections import Counter
-    counts = Counter(x for x in deck if x != 1)  # energy (card 1) exempt
-    # basic energy is cardId 1 only here; treat any energy card id <=8 as exempt
+    # basic energy is cardId 1-8; treat any basic energy as exempt
     energy_ids = set(range(1, 9))
     counts = Counter(x for x in deck if x not in energy_ids)
     bad = {k: v for k, v in counts.items() if v > 4}
     assert not bad, f"copy limit exceeded: {bad}"
-    assert any(c in deck for c in (625, 328, 299, 39, 390)), "need at least one Basic Pokemon"
+    assert any(c in deck for c in BASIC_POKEMON_IDS), "need at least one Basic Pokemon"
     return True
 
 
@@ -384,12 +393,12 @@ def main():
     creds = load_creds()
     api_key = creds["apiKey"]
     print(f"agent={creds['handle']} agentId={creds['agentId']}")
-    print(f"deck: {len(DECK)} cards (Druddigon x4 + Pikachu ex x4 + Hop's Zacian ex x4 + Enamorus x4 + Tauros x4 + Grass Energy x40)")
+    print(f"deck: {len(DECK)} cards (Abra/Kadabra/Alakazam + Dunsparce/Dudunsparce ex + Fezandipiti ex + Mega Audino ex/Audino + 30 trainers + 12 Psychic Energy)")
 
     # Initialize belief tracker + heuristic
     if HAS_BELIEF:
         try:
-            archetype = {625: 4, 328: 4, 299: 4, 39: 4, 390: 4, 1: 40}
+            archetype = {}  # infer opponent archetype from observed cards only
             tracker = create_belief_tracker(archetype)
             BELIEF_HEURISTIC = BeliefWeightedHeuristic(tracker, time_budget_ms=1000)
             print("Belief tracker + ISMCTS heuristic: ENABLED")

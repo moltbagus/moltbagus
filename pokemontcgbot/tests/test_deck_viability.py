@@ -15,6 +15,12 @@ BASIC_POKEMON = {
     39: {"name": "Enamorus", "hp": 120, "max_damage": 30},
     390: {"name": "Tauros", "hp": 130, "max_damage": 30},
     235: {"name": "Budew", "hp": 30, "max_damage": 10},
+    # S7 evolution basics: low HP is expected; they are not the attackers.
+    741: {"name": "Abra", "hp": 50, "max_damage": 10, "pre_evolution": True},
+    305: {"name": "Dunsparce", "hp": 70, "max_damage": 20, "pre_evolution": True},
+    140: {"name": "Fezandipiti ex", "hp": 210, "max_damage": 100},
+    1006: {"name": "Mega Audino ex", "hp": 270, "max_damage": 100},
+    554: {"name": "Audino", "hp": 100, "max_damage": 30},
 }
 
 MIN_HP = 80
@@ -38,7 +44,10 @@ def test_deck_size():
 
 def test_basic_pokemon_hp():
     deck = _load_deck()
-    basics = [c for c in deck if c in BASIC_POKEMON]
+    basics = [
+        c for c in deck
+        if c in BASIC_POKEMON and not BASIC_POKEMON[c].get("pre_evolution")
+    ]
     for card_id in set(basics):
         hp = BASIC_POKEMON[card_id]["hp"]
         assert hp >= MIN_HP, (
@@ -48,7 +57,10 @@ def test_basic_pokemon_hp():
 
 def test_basic_pokemon_damage():
     deck = _load_deck()
-    basics = [c for c in deck if c in BASIC_POKEMON]
+    basics = [
+        c for c in deck
+        if c in BASIC_POKEMON and not BASIC_POKEMON[c].get("pre_evolution")
+    ]
     for card_id in set(basics):
         dmg = BASIC_POKEMON[card_id]["max_damage"]
         assert dmg >= MIN_DAMAGE, (
