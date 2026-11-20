@@ -367,6 +367,17 @@ def best_attach_action(obs: Any, legal_actions: Sequence[str]) -> Optional[str]:
     return attach[0][1]
 
 
+def _bench_empty(obs: Any) -> bool:
+    """True when our side has no Benched Pokemon."""
+    current = obs.get("current") or {}
+    your_index = current.get("yourIndex", 0)
+    players = current.get("players") or []
+    if isinstance(your_index, int) and 0 <= your_index < len(players):
+        player = players[your_index] or {}
+        return not (player.get("bench") or [])
+    return False
+
+
 def _best_attack_damage(obs: Any, legal_actions: Sequence[str]) -> int:
     """Return the best printed damage among legal attack options."""
     options = select_of(obs).get("option") or []
@@ -450,10 +461,15 @@ def best_action(obs: Any, legal_actions: Sequence[str], belief: Any = None) -> O
         if attach is not None:
             return attach
     # Developing the board must happen before an attack, because an attack
-    # ends the turn. Trainer plays do not end the turn; an empty bench makes
-    # this critical because a lone Basic in hand is the only way to avoid
-    # losing to no_active_pokemon.
-    development = best_development_action(obs, legal, allow_play=True)
+    # ends the turn. Trainer plays are forced when the bench is empty (a lone
+    # Basic in hand is the only way to avoid no_active_pokemon) or when the
+    # best attack does zero damage; otherwise a damaging attack is allowed so
+    # the bot does not burn a Supporter blindly.
+    bench_empty = _bench_empty(obs)
+    attack_damage = _best_attack_damage(obs, legal)
+    development = best_development_action(
+        obs, legal, allow_play=bench_empty or attack_damage == 0
+    )
     if development is not None:
         return development
     best = legal[0]

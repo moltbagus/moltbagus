@@ -25,9 +25,17 @@ def test_empty_bench_plays_basic_before_attack():
     assert best_action(obs, ["[0]", "[1]"]) == "[0]"
 
 
-def test_trainer_play_precedes_attack_with_nonempty_bench():
+def test_trainer_play_does_not_precede_damaging_attack_with_nonempty_bench():
     obs = _obs(
         [{"type": 7}, {"type": 13, "attackId": 1454}],
+        bench=[{"id": 741, "hp": 50, "maxHp": 50}],
+    )
+    assert best_action(obs, ["[0]", "[1]"]) == "[1]"
+
+
+def test_trainer_play_precedes_zero_damage_attack_with_nonempty_bench():
+    obs = _obs(
+        [{"type": 7}, {"type": 13, "attackId": 423}],
         bench=[{"id": 741, "hp": 50, "maxHp": 50}],
     )
     assert best_action(obs, ["[0]", "[1]"]) == "[0]"
