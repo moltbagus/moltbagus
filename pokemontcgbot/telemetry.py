@@ -20,6 +20,7 @@ Rules this module keeps:
 from __future__ import annotations
 
 import json
+import os
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -152,6 +153,20 @@ def build_record(
     }
 
 
+def _resolve_path(path: Optional[Path] = None) -> Path:
+    """Where records go: explicit > env override > configured default.
+
+    The env override exists so a test run can never append to the live
+    decision log (``conftest.py`` sets it for the whole suite).
+    """
+    if path is not None:
+        return Path(path)
+    override = os.environ.get("ARENA_TELEMETRY_PATH")
+    if override:
+        return Path(override)
+    return Path(TELEMETRY_PATH)
+
+
 def _rotate_if_needed(path: Path) -> None:
     try:
         if path.exists() and path.stat().st_size > MAX_BYTES:
@@ -172,7 +187,7 @@ def record(
         entry = build_record(pending_entry, chosen, latency_ms, policy_version)
         if entry is None:
             return False
-        target = Path(path) if path is not None else TELEMETRY_PATH
+        target = _resolve_path(path)
         _rotate_if_needed(target)
         target.parent.mkdir(parents=True, exist_ok=True)
         with target.open("a", encoding="utf-8") as handle:
@@ -184,7 +199,7 @@ def record(
 
 def read(path: Optional[Path] = None) -> List[Dict[str, Any]]:
     """Read back records, skipping any line that is not valid JSON."""
-    target = Path(path) if path is not None else TELEMETRY_PATH
+    target = _resolve_path(path)
     out: List[Dict[str, Any]] = []
     try:
         with target.open("r", encoding="utf-8") as handle:

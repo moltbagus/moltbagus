@@ -152,3 +152,14 @@ def test_telemetry_is_optional(monkeypatch):
     monkeypatch.setattr(bot, "telemetry", None)
     entry = _entry()
     assert bot.choose_action(entry, None) == bot._choose_action(entry, None)
+
+
+def test_env_override_keeps_test_runs_out_of_the_live_log(monkeypatch, tmp_path):
+    """Synthetic decisions must never land in the production corpus."""
+    target = tmp_path / "isolated.jsonl"
+    monkeypatch.setenv("ARENA_TELEMETRY_PATH", str(target))
+    assert telemetry.record(_entry(), "[0]", 1.0) is True
+    records = telemetry.read()
+    assert [r["chosen"] for r in records] == ["[0]"]
+    assert telemetry._resolve_path() == target
+    assert telemetry._resolve_path() != arena_config.TELEMETRY_PATH
