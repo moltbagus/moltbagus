@@ -70,14 +70,14 @@ def _service_binding() -> tuple[str, str]:
     return "unknown", "unknown"
 
 
-def binding_fields() -> dict:
+def binding_fields(competition_id: str | None = None) -> dict:
     """Fields that bind a report to the code and process that produced it."""
     pid, start = _service_binding()
     return {
         "commit": os.environ.get("ARENA_COMMIT") or _git_commit(),
         "bot_pid": os.environ.get("ARENA_BOT_PID") or pid,
         "bot_start": os.environ.get("ARENA_BOT_START") or start,
-        "competition_id": DEFAULT_COMPETITION_ID,
+        "competition_id": competition_id or DEFAULT_COMPETITION_ID,
     }
 
 SHANGHAI = timezone(timedelta(hours=8))
@@ -444,7 +444,7 @@ def build_report(
         "since_epoch_ms": since_ms,
         "competition_id": competition_id,
         "agent_id": agent_id,
-        "binding": binding_fields(),
+        "binding": binding_fields(competition_id),
         "window": {
             "matches": summary["matches"],
             "wins": summary["wins"],
@@ -549,8 +549,16 @@ def run(argv: list[str] | None = None, fetcher=None, now_ms: int | None = None) 
     parser.add_argument("--limit", type=int, default=MAX_LIMIT, help="Page size (max 50).")
     parser.add_argument("--competition-id", default=DEFAULT_COMPETITION_ID)
     parser.add_argument("--agent-id", default=None)
+    parser.add_argument(
+        "--commit",
+        default=None,
+        help="Commit hash to embed in the JSON binding; defaults to git HEAD.",
+    )
     parser.add_argument("--credentials", default=str(DEFAULT_CREDS))
     args = parser.parse_args(argv)
+
+    if args.commit:
+        os.environ["ARENA_COMMIT"] = args.commit
 
     since_ms = parse_since(args.since)
     api_key = ""
