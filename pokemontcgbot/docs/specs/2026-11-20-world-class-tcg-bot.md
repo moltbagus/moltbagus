@@ -17,6 +17,8 @@ Owner: Colbert Low. Season under test: `[TCG] Playground S7` `cmwm3cekx011nln01c
 | 2026-11-20 | **Restart gate fixed** — `restart_when_idle.sh` carried the **S6** competition id, so its "is a match running?" probe read 0 while S7 had a live match and the restart killed it; it now reads `arena_config` | `tests/test_deploy_scripts.py::test_restart_script_reads_the_season_from_arena_config` |
 | 2026-11-20 | **Deploy list fixed** — `.agent-team/sync-live.sh` did not copy `arena_config.py` or `telemetry.py`, so a sync could ship an entrypoint whose import was missing | `tests/test_deploy_scripts.py::test_sync_live_deploys_every_module` |
 | 2026-11-20 | **Test/live isolation** — running the suite wrote 12 synthetic decisions into the production log; `conftest.py` now redirects `ARENA_TELEMETRY_PATH` and telemetry resolves its path at call time | `tests/test_telemetry.py::test_env_override_keeps_test_runs_out_of_the_live_log`; live log repopulated with real S7 records only |
+| 2026-11-21 | **Offline replay gate** — `telemetry.py` now stores the pruned observation and the full legal-action list; `replay.py` replays the corpus through `scoring.best_action` and reports illegal choices, choice deltas and score deltas | first live run (`--since 00:44:47`): 14 records, 14 scorable, **0 illegal**, 4 changed (28.6%), mean score delta −23.75, all in select type 0; evidence `evidence/replay-post-deploy.json` |
+| 2026-11-21 | **Match labels truthful** — `deck_version`/`heuristic` come from `arena_config.DECK_VERSION` and `POLICY_VERSION` instead of the hardcoded `druddigon-v2` / `belief-ismcts` | `tests/test_attribution.py` |
 
 ---
 
