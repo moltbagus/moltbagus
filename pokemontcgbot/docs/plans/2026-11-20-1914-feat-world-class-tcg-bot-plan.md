@@ -39,9 +39,9 @@ R1. Before an attack, the policy resolves legal evolution and ability actions. I
 
 R2. When the bench is empty and a Basic can be played to it, the policy plays that Basic before attacking.
 
-R3. A legal evolution is chosen before an attack. When multiple evolutions are legal, the tie-break is deferred: the remote hand gives no card identity.
+R3. A legal evolution is chosen before an attack. When multiple evolutions are legal, the target with the higher board value (HP, max HP, attached energy) wins, independent of the server's option order.
 
-R4. Attack scoring uses real damage, including effect scaling, weakness, resistance, and prize value. A zero-printed-damage utility attack is a last resort, not a default.
+R4. Attack scoring uses effect-scaled damage for the deck's attacks: Ear Force adds 80 per energy on the opponent's Active, Psychic adds 50, Tenacious Tail counts opponent ex, and Cruel Arrow is 100. Weakness, resistance, and prize value remain deferred.
 
 **Measurement integrity**
 
@@ -74,7 +74,7 @@ This plan owns the live policy and measurement slice. The deck rebuild and offli
 - **Current slice:** R1–R7, R10–R11.
 - **Deferred to S8:** deck rebuild to 15–16 Basics, draw supporters, and removal of dead cards. The S7 deck is locked.
 - **Blocked:** A/B harness cannot load the S7 card pool, so local simulation cannot gate the deck change yet.
-- **Still to decide:** the evolution tie-break and the real-damage model.
+- **Still to decide:** weakness and resistance modeling, and prize-value weighting beyond the KO bonus.
 
 ### Key Flows
 
@@ -133,7 +133,7 @@ AE4. **Non-empty bench, damaging attack legal.**
 
 - **Deferred to Planning:** Which cards leave the deck to reach 15 Basics, and which draw supporters replace them? This is S8 work; the S7 deck is locked.
 - **Deferred to Planning:** Can `ab_harness` be extended to the S7 pool, or are the simulation milestones blocked for this season?
-- **Deferred to Planning:** The evolution tie-break and the real-damage model need implementation; neither is claimed as shipped.
+- **Deferred to Planning:** Weakness/resistance modeling and prize-value weighting beyond the KO bonus.
 
 ### Sources / Research
 
