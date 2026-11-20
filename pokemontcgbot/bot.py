@@ -257,10 +257,16 @@ def error_code(resp):
     return None
 
 
-def _choose_action(pending_entry, belief_heuristic=None):
+def _choose_action_with_path(pending_entry, belief_heuristic=None):
+    """Choose an action and say which path produced it.
+
+    Returns ``(choice, path)`` where ``path`` is ``belief`` (the belief
+    heuristic answered), ``scoring`` (``scoring.best_action`` answered) or
+    ``fallback`` (scoring declined and the first legal action was used).
+    """
     legal = pending_entry.get("legalActions") or []
     if not legal:
-        return None
+        return None, "fallback"
 
     obs = pending_entry.get("obs") or {}
 
@@ -273,27 +279,37 @@ def _choose_action(pending_entry, belief_heuristic=None):
         try:
             result = belief_heuristic.choose(obs, legal)
             if result in legal:
-                return result
+                return result, "belief"
         except Exception:
             pass
 
     # Card-aware fallback (the obs has no damage field; options use type/attackId).
     chosen = best_action(obs, legal)
-    return chosen if chosen is not None else legal[0]
+    if chosen is not None:
+        return chosen, "scoring"
+    return legal[0], "fallback"
+
+
+def _choose_action(pending_entry, belief_heuristic=None):
+    return _choose_action_with_path(pending_entry, belief_heuristic)[0]
 
 
 def choose_action(pending_entry, belief_heuristic=None):
     """Decision entry point shared by bot.py and bot_async.py.
 
-    Chooses exactly as before, then records one telemetry line. Telemetry can
-    never change the choice or raise into the play loop.
+    Chooses exactly as before, then records one telemetry line carrying the
+    path that answered (``policy_path``). Telemetry can never change the
+    choice or raise into the play loop.
     """
     started = time.monotonic()
-    choice = _choose_action(pending_entry, belief_heuristic)
+    choice, policy_path = _choose_action_with_path(pending_entry, belief_heuristic)
     if choice is not None and telemetry is not None:
         try:
             telemetry.record(
-                pending_entry, choice, (time.monotonic() - started) * 1000.0
+                pending_entry,
+                choice,
+                (time.monotonic() - started) * 1000.0,
+                policy_path=policy_path,
             )
         except Exception:
             pass

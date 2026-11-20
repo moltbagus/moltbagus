@@ -12,6 +12,9 @@ Reported:
 * ``meanScoreDelta`` — the replayed choice's score minus the recorded choice's
   score, averaged over changed decisions.
 * ``bySelectType`` — where the changes concentrate (trainer play, attach, attack…).
+* ``byPath`` — which code path answered each decision (``belief``, ``scoring``,
+  ``fallback``, or ``unknown`` for records that predate attribution), so a
+  belief-path override is separated from a genuine ``scoring`` policy delta.
 
 Usage::
 
@@ -35,6 +38,14 @@ import scoring
 import telemetry
 
 Chooser = Callable[[Dict[str, Any], List[str]], Optional[str]]
+
+POLICY_PATHS = ("belief", "scoring", "fallback")
+
+
+def _path_of(record: Dict[str, Any]) -> str:
+    """The recorded decision path, or ``unknown`` when absent/unrecognised."""
+    path = record.get("policyPath")
+    return path if path in POLICY_PATHS else "unknown"
 
 
 def default_choices(obs: Dict[str, Any], legal: List[str]) -> Optional[str]:
@@ -68,6 +79,7 @@ def replay(
     total = scored = illegal = changed = unscorable = 0
     deltas: List[float] = []
     by_type: Dict[str, Dict[str, int]] = {}
+    by_path: Dict[str, Dict[str, int]] = {}
     matches = set()
     versions = set()
     first_ts: Optional[float] = None
@@ -104,6 +116,8 @@ def replay(
         select_type = str(record.get("selectType"))
         bucket = by_type.setdefault(select_type, {"n": 0, "changed": 0})
         bucket["n"] += 1
+        path_bucket = by_path.setdefault(_path_of(record), {"n": 0, "changed": 0})
+        path_bucket["n"] += 1
 
         try:
             replayed = chooser(obs, legal)
@@ -115,6 +129,7 @@ def replay(
         if replayed != chosen:
             changed += 1
             bucket["changed"] += 1
+            path_bucket["changed"] += 1
             new_score = _score(replayed, obs)
             old_score = _score(chosen, obs)
             if new_score is not None and old_score is not None:
@@ -130,6 +145,7 @@ def replay(
         "changeRate": (changed / scored) if scored else 0.0,
         "meanScoreDelta": round(mean_delta, 3),
         "bySelectType": dict(sorted(by_type.items())),
+        "byPath": dict(sorted(by_path.items())),
         "matches": len(matches),
         "policyVersions": sorted(versions),
         "firstTs": first_ts,
@@ -166,6 +182,10 @@ def main(argv: Optional[List[str]] = None) -> int:
         print("  by select type")
         for key, bucket in report["bySelectType"].items():
             print(f"    type {key:>4}  n={bucket['n']:>4}  changed={bucket['changed']}")
+    if report["byPath"]:
+        print("  by policyPath")
+        for key, bucket in report["byPath"].items():
+            print(f"    {key:<8}  n={bucket['n']:>4}  changed={bucket['changed']}")
     print(f"  gate          {'PASS' if report['passed'] else 'FAIL'}")
 
     if args.json_out:

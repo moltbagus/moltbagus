@@ -1,6 +1,6 @@
 from belief import BeliefTracker
 from ismcts import BeliefWeightedHeuristic
-from scoring import best_action
+from scoring import best_action, option_score, real_damage
 
 
 def make_obs(options, our_hp=120, our_max_hp=120, opp_hp=210, yi=0):
@@ -83,3 +83,21 @@ def test_heuristic_choose_does_not_update_belief_twice():
 
     assert heuristic.choose(obs, ["[0]", "[1]"]) == "[0]"
     assert belief.sync_calls == 0  # bot.choose_action owns the single update
+
+
+# --- catalog-backed facts -------------------------------------------------
+
+
+def test_unknown_attack_id_scores_as_neutral_damage():
+    assert real_damage(999999, make_obs([])) == 0
+
+
+def test_cruel_arrow_uses_the_parsed_effect_not_the_printed_zero():
+    # Printed damage for attack 183 is 0; the text says 100 to a chosen Pokemon.
+    assert real_damage(183, make_obs([])) == 100
+
+
+def test_choose_card_hp_bonus_comes_from_the_catalog():
+    # Option carries the card id but the zone is not visible, so scoring falls
+    # back to the catalog HP: 10 + 270/10 for Mega Audino ex.
+    assert option_score({"type": 3, "id": 1006}, make_obs([])) == 37.0

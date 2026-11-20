@@ -39,7 +39,7 @@ def _obs():
     }
 
 
-def _record(seq, chosen, legal, select_type=13, with_obs=True):
+def _record(seq, chosen, legal, select_type=13, with_obs=True, policy_path="unknown"):
     """A minimal but honestly-shaped corpus record."""
     return {
         "ts": 1795187000000 + seq,
@@ -51,6 +51,7 @@ def _record(seq, chosen, legal, select_type=13, with_obs=True):
         "legalActions": legal,
         "obs": _obs() if with_obs else None,
         "policyVersion": arena_config.POLICY_VERSION,
+        "policyPath": policy_path,
     }
 
 
@@ -137,3 +138,46 @@ def test_cli_writes_evidence(tmp_path):
     assert code == 0
     assert payload["illegal"] == 0
     assert payload["policyVersion"] == arena_config.POLICY_VERSION
+    assert set(payload["byPath"]) == {"unknown"}
+
+
+def test_replay_splits_changed_by_policy_path():
+    records = [
+        _record(1, "[1]", ["[0]", "[1]"], policy_path="belief"),   # belief override -> change
+        _record(2, "[0]", ["[0]", "[1]"], policy_path="belief"),   # belief agrees
+        _record(3, "[1]", ["[0]", "[1]"], policy_path="scoring"),  # genuine policy delta
+        _record(4, "[0]", ["[0]", "[1]"], policy_path="scoring"),  # scoring agrees
+        _record(5, "[0]", ["[0]", "[1]"]),                         # legacy record, no field
+    ]
+    legacy = dict(records[4])
+    legacy.pop("policyPath")
+    records[4] = legacy
+
+    report = replay.replay(records, choose=lambda obs, legal: "[0]")
+
+    assert report["changed"] == 2
+    assert report["byPath"] == {
+        "belief": {"n": 2, "changed": 1},
+        "scoring": {"n": 2, "changed": 1},
+        "unknown": {"n": 1, "changed": 0},
+    }
+
+
+def test_cli_prints_the_policy_path_breakdown(tmp_path, capsys):
+    path = tmp_path / "corpus.jsonl"
+    rows = [
+        _record(1, "[1]", ["[0]", "[1]"], policy_path="belief"),
+        _record(2, "[1]", ["[0]", "[1]"], policy_path="scoring"),
+    ]
+    path.write_text("\n".join(json.dumps(r) for r in rows) + "\n", encoding="utf-8")
+    evidence = tmp_path / "replay.json"
+
+    code = replay.main(["--path", str(path), "--json-out", str(evidence)])
+
+    out = capsys.readouterr().out
+    assert code == 0
+    assert "by policyPath" in out
+    assert "belief" in out
+    assert "scoring" in out
+    payload = json.loads(evidence.read_text(encoding="utf-8"))
+    assert set(payload["byPath"]) == {"belief", "scoring"}

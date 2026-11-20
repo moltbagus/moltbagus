@@ -34,6 +34,16 @@ MAX_BYTES = 64 * 1024 * 1024
 # decision is waste. The chosen action is always scored, the rest are capped.
 MAX_CANDIDATES = 24
 
+# Which code path actually answered the decision. ``unknown`` is what a record
+# carries when no caller attributed it (direct ``build_record`` calls, or
+# corpora written before attribution existed). Replay groups ``changed`` by
+# this field so a belief-path override is never mistaken for a policy delta.
+POLICY_PATHS = ("belief", "scoring", "fallback")
+
+
+def _policy_path(value: Any) -> str:
+    return value if value in POLICY_PATHS else "unknown"
+
 
 def _as_int(value: Any, default: Optional[int] = 0) -> Optional[int]:
     try:
@@ -180,6 +190,7 @@ def build_record(
     latency_ms: float,
     policy_version: str = POLICY_VERSION,
     now_ms: Optional[float] = None,
+    policy_path: str = "unknown",
 ) -> Optional[Dict[str, Any]]:
     """Build one telemetry record. Returns ``None`` on an unusable entry."""
     if not isinstance(pending_entry, dict):
@@ -231,6 +242,7 @@ def build_record(
         "obs": _prune_obs(obs),
         "state": _state_snapshot(obs),
         "policyVersion": policy_version,
+        "policyPath": _policy_path(policy_path),
     }
 
 
@@ -262,10 +274,17 @@ def record(
     latency_ms: float,
     path: Optional[Path] = None,
     policy_version: str = POLICY_VERSION,
+    policy_path: str = "unknown",
 ) -> bool:
     """Append one decision record. Never raises; returns False on failure."""
     try:
-        entry = build_record(pending_entry, chosen, latency_ms, policy_version)
+        entry = build_record(
+            pending_entry,
+            chosen,
+            latency_ms,
+            policy_version,
+            policy_path=policy_path,
+        )
         if entry is None:
             return False
         target = _resolve_path(path)

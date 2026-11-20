@@ -163,3 +163,68 @@ def test_env_override_keeps_test_runs_out_of_the_live_log(monkeypatch, tmp_path)
     assert [r["chosen"] for r in records] == ["[0]"]
     assert telemetry._resolve_path() == target
     assert telemetry._resolve_path() != arena_config.TELEMETRY_PATH
+
+
+class _StubBelief:
+    """The shape bot's belief path calls: ``search.update_belief_from_obs`` + ``choose``."""
+
+    def __init__(self, choice):
+        self.search = self
+        self.choice = choice
+        self.updates = 0
+
+    def update_belief_from_obs(self, obs):
+        self.updates += 1
+
+    def choose(self, obs, legal):
+        return self.choice
+
+
+def test_choose_action_round_trips_the_belief_path(monkeypatch, tmp_path):
+    monkeypatch.setattr(bot, "HAS_BELIEF", True)
+    path = tmp_path / "belief.jsonl"
+    monkeypatch.setenv("ARENA_TELEMETRY_PATH", str(path))
+    heuristic = _StubBelief("[2]")
+
+    assert bot.choose_action(_entry(), heuristic) == "[2]"
+
+    record = telemetry.read(path)[-1]
+    assert record["chosen"] == "[2]"
+    assert record["policyPath"] == "belief"
+    assert heuristic.updates == 1
+
+
+def test_choose_action_round_trips_the_scoring_path(monkeypatch, tmp_path):
+    path = tmp_path / "scoring.jsonl"
+    monkeypatch.setenv("ARENA_TELEMETRY_PATH", str(path))
+
+    chosen = bot.choose_action(_entry(), None)
+
+    record = telemetry.read(path)[-1]
+    assert record["chosen"] == chosen
+    assert record["policyPath"] == "scoring"
+
+
+def test_choose_action_records_the_fallback_path(monkeypatch, tmp_path):
+    path = tmp_path / "fallback.jsonl"
+    monkeypatch.setenv("ARENA_TELEMETRY_PATH", str(path))
+    monkeypatch.setattr(bot, "best_action", lambda obs, legal: None)
+
+    assert bot.choose_action(_entry(), None) == "[0]"
+
+    assert telemetry.read(path)[-1]["policyPath"] == "fallback"
+
+
+def test_policy_path_defaults_to_unknown(tmp_path):
+    rec = telemetry.build_record(_entry(), "[1]", 1.0)
+    assert rec is not None
+    assert rec["policyPath"] == "unknown"
+    path = tmp_path / "unknown.jsonl"
+    assert telemetry.record(_entry(), "[1]", 1.0, path=path) is True
+    assert telemetry.read(path)[0]["policyPath"] == "unknown"
+
+
+def test_unrecognised_policy_path_is_recorded_as_unknown():
+    rec = telemetry.build_record(_entry(), "[1]", 1.0, policy_path="telepathy")
+    assert rec is not None
+    assert rec["policyPath"] == "unknown"

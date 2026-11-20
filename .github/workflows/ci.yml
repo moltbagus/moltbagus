@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  suite-and-replay-gate:
+    name: pytest + replay gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # GitHub only reads workflows from <repo-root>/.github/workflows/, but the
+    # bot itself lives in pokemontcgbot/. Every run step below executes there so
+    # replay.py, tests/ and scoring.py resolve without ../ prefixes.
+    defaults:
+      run:
+        working-directory: pokemontcgbot
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test dependencies
+        # The suite needs pytest (runner) and httpx (the async bot client).
+        # Everything else it imports is stdlib; no requirements file exists yet.
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install pytest httpx
+
+      - name: Run the test suite
+        # A failing test fails this step, and therefore the job.
+        run: python3 -m pytest -q
+
+      - name: Replay gate
+        # replay.py exits 1 when the gate fails, which includes "nothing
+        # scorable". CI has no live decision corpus: it is append-only runtime
+        # telemetry at $HOME/.arena-tcg-decisions.jsonl, outside the repo.
+        # Policy, chosen explicitly: RUN the gate either way.
+        #   * corpus absent -> the gate MUST report FAIL on 0 records and exit 1.
+        #     That is asserted here, then tolerated, so the job stays green while
+        #     still proving the gate imports, loads the policy, and reads a corpus.
+        #   * corpus present (self-hosted runner, restored artifact) -> the gate
+        #     must PASS with illegal == 0, otherwise the job fails.
+        shell: bash
+        run: |
+          set -euo pipefail
+          corpus="${HOME}/.arena-tcg-decisions.jsonl"
+
+          rc=0
+          out="$(python3 replay.py --path "$corpus" 2>&1)" || rc=$?
+          printf '%s\n' "$out"
+
+          if [ ! -s "$corpus" ]; then
+            echo "replay-gate: corpus absent or empty at ${corpus}"
+            if [ "$rc" -ne 1 ]; then
+              echo "::error::expected replay gate to exit 1 on an empty corpus, got ${rc}"
+              exit 1
+            fi
+            grep -Eq 'corpus[[:space:]]+0 records' <<<"$out" || {
+              echo "::error::expected 'corpus 0 records' in gate output"
+              exit 1
+            }
+            grep -Eq 'gate[[:space:]]+FAIL' <<<"$out" || {
+              echo "::error::expected 'gate FAIL' on an empty corpus"
+              exit 1
+            }
+            echo "replay-gate: empty corpus reported FAIL as designed; not a job failure"
+            exit 0
+          fi
+
+          if [ "$rc" -ne 0 ]; then
+            echo "::error::replay gate failed on a non-empty corpus (exit ${rc})"
+            exit 1
+          fi
+          grep -Eq 'illegal[[:space:]]+0([[:space:]]|$)' <<<"$out" || {
+            echo "::error::replay gate reported a non-zero illegal count"
+            exit 1
+          }
+          grep -Eq 'gate[[:space:]]+PASS' <<<"$out" || {
+            echo "::error::replay gate did not report PASS"
+            exit 1
+          }
+          echo "replay-gate: PASS with illegal 0"

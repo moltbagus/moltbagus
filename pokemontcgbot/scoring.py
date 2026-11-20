@@ -5,77 +5,18 @@ identified by ``type`` and, for attacks, ``attackId``.  This module scores the
 real schema (``obs.current.players`` / ``obs.select.option``) and is shared by
 the bot fallback path and the ISMCTS heuristic so both make the same decision.
 
-Attack damage values are the ones published by the arena catalog for the cards
-in the current deck.  Unknown attack ids score as neutral attacks rather than
+Attack damage and card HP come from :mod:`catalog`, which reads the checked-in
+arena snapshot; the effect scaling (per opponent energy, per opponent ex,
+damage to a chosen Pokemon) comes from the attack's parsed descriptor in
+:mod:`effects`.  Unknown attack ids score as neutral attacks rather than
 crashing or silently becoming zero-value.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, List, Optional, Sequence
 
-# Basic energy card ids in the arena catalog (Basic {G}/{R}/.../{M}).
-BASIC_ENERGY_IDS = frozenset(range(1, 9))
-
-# attackId -> printed damage, from /api/arena/tcg/attacks for the deck cards.
-ATTACK_DAMAGE: Dict[int, int] = {
-    901: 40,   # Druddigon - Shred
-    902: 90,   # Druddigon - Ambush
-    456: 30,   # Pikachu ex - Tail Whap
-    457: 220,  # Pikachu ex - Thunder
-    412: 30,   # Hop's Zacian ex - Insta-Strike
-    413: 240,  # Hop's Zacian ex - Brave Slash
-    31: 30,    # Enamorus - Heart Sign
-    32: 80,    # Enamorus - Love Resonance
-    545: 30,   # Tauros - Horn Attack
-    546: 50,   # Tauros - Clean Hit
-    323: 10,   # Budew - Itchy Pollen
-    # S7 Audino / Alakazam / Dunsparce / Fezandipiti deck
-    1070: 10,  # Abra - Teleportation Attack
-    1071: 30,  # Kadabra - Super Psy Bolt
-    338: 0,    # Alakazam - Strange Hacking (confuse/move damage)
-    339: 10,   # Alakazam - Psychic (base; +50 per opponent energy)
-    423: 0,    # Dunsparce - Trading Places (switch)
-    424: 20,   # Dunsparce - Ram
-    425: 0,    # Dudunsparce ex - Tenacious Tail (60 per opponent ex)
-    426: 150,  # Dudunsparce ex - Destructive Drill
-    183: 100,  # Fezandipiti ex - Cruel Arrow (bench snipe)
-    791: 30,   # Audino - Return
-    1453: 0,   # Mega Audino ex - Kaleidowaltz (energy acceleration)
-    1454: 20,  # Mega Audino ex - Ear Force (base; +80 per opponent energy)
-}
-
-# hp for cards we can identify in our own deck/board.  Opponent board cards
-# carry hp directly in obs, so no opponent catalog is needed.
-CARD_HP: Dict[int, int] = {
-    625: 120,
-    328: 190,
-    299: 230,
-    39: 120,
-    390: 130,
-    235: 30,
-    741: 50,
-    742: 80,
-    245: 140,
-    305: 70,
-    306: 270,
-    140: 210,
-    1006: 270,
-    554: 100,
-}
-
-# Cards that count as Pokemon ex for effect damage. Mega ex counts as ex.
-EX_CARD_IDS = {
-    24, 29, 30, 37, 40, 44, 46, 52, 63, 75, 79, 80, 83, 84, 96, 99, 107, 108,
-    117, 121, 125, 130, 138, 139, 140, 141, 150, 153, 154, 161, 176, 179, 184,
-    189, 190, 193, 198, 205, 207, 210, 223, 229, 231, 232, 236, 239, 241, 243,
-    244, 246, 248, 249, 259, 269, 272, 283, 293, 299, 302, 306, 313, 316, 320,
-    326, 328, 329, 331, 336, 337, 340, 357, 369, 372, 381, 389, 404, 407, 424,
-    431, 447, 455, 458, 471, 481, 509, 515, 525, 527, 547, 561, 573, 583, 598,
-    618, 631, 641, 648, 652, 662, 678, 687, 695, 723, 737, 747, 754, 756, 766,
-    772, 781, 790, 795, 806, 813, 828, 835, 849, 861, 868, 886, 896, 904, 911,
-    919, 928, 932, 939, 944, 951, 954, 957, 962, 968, 969, 975, 979, 984, 988,
-    990, 993, 997, 1002, 1006, 1022, 1026, 1031, 1040, 1056, 1062, 1064, 1071,
-}
+from catalog import BASIC_ENERGY_IDS, CATALOG, EX_IDS
+from effects import DamageContext
 
 # Select option type codes observed in arena decision logs.
 OPTION_CHOOSE_CARD = 3
@@ -104,25 +45,21 @@ def _opponent_ex_count(obs: Any) -> int:
     cards = list(player.get("active") or []) + list(player.get("bench") or [])
     count = 0
     for card in cards:
-        if isinstance(card, dict) and card.get("id") in EX_CARD_IDS:
+        if isinstance(card, dict) and card.get("id") in EX_IDS:
             count += 1
     return count
 
 
 def real_damage(attack_id: int, obs: Any) -> int:
     """Return expected damage after the attack's printed effect scaling."""
-    base = ATTACK_DAMAGE.get(attack_id, 0)
-    target = opponent_active(obs)
-    target_energy = _energy_count(target)
-    if attack_id == 1454:  # Ear Force: 20 + 80 per energy on the opponent's Active
-        return 20 + 80 * target_energy
-    if attack_id == 339:  # Psychic: 10 + 50 per energy on the opponent's Active
-        return 10 + 50 * target_energy
-    if attack_id == 425:  # Tenacious Tail: 60 per opponent ex in play
-        return 60 * _opponent_ex_count(obs)
-    if attack_id == 183:  # Cruel Arrow: 100 to one chosen Pokemon
-        return 100
-    return base
+    attack = CATALOG.attack(attack_id)
+    if attack is None:
+        return 0
+    context = DamageContext(
+        opponent_active_energy=_energy_count(opponent_active(obs)),
+        opponent_ex_in_play=_opponent_ex_count(obs),
+    )
+    return attack.effect.damage(attack.damage, context)
 
 
 def select_of(obs: Any) -> dict:
@@ -350,8 +287,8 @@ def option_score(option: Any, obs: Any, belief: Any = None) -> float:
                 pass
         elif card_id in BASIC_ENERGY_IDS:
             score -= 5.0
-        elif card_id in CARD_HP:
-            score += CARD_HP[card_id] / 10.0
+        elif (hp := CATALOG.card_hp(card_id)) is not None:
+            score += hp / 10.0
         return score
     # Setup choices (coin flip / first player) and unknown option types.
     return 10.0
