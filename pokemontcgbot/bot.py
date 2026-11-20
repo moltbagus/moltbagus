@@ -17,8 +17,22 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from arena_config import COMPETITION_ID, SEASON_NUMBER, DECK_THESIS
+from arena_config import (
+    BASIC_POKEMON_IDS,
+    COMPETITION_ID,
+    DECK,
+    DECK_THESIS,
+    POLICY_VERSION,
+    SEASON_NUMBER,
+)
 from scoring import best_action
+
+# Per-decision telemetry (spec section 7). Optional on purpose: a live copy that
+# predates this module must still run the bot.
+try:
+    import telemetry
+except Exception:  # pragma: no cover - defensive
+    telemetry = None
 
 # Belief tracking + ISMCTS search
 try:
@@ -51,21 +65,8 @@ BELIEF_HEURISTIC = None
 RUFLO = None
 _LOCK_HANDLE = None
 
-# S7 deck: Alakazam / Dudunsparce / Fezandipiti with the Audino package.
-# 18 Pokemon + 30 Trainers + 12 Basic Psychic Energy = 60.
-DECK = (
-    [741] * 3 + [742] * 2 + [245] * 2      # Abra / Kadabra / Alakazam
-    + [305] * 3 + [306] * 2                 # Dunsparce / Dudunsparce ex
-    + [140] * 2                             # Fezandipiti ex
-    + [1006] * 2 + [554] * 2                # Mega Audino ex / Audino
-    + [1086] * 4 + [1152] * 4               # Buddy-Buddy Poffin / Poke Pad
-    + [1231] * 3 + [1182] * 3              # Dawn / Boss's Orders
-    + [1097] * 3 + [1198] * 3              # Night Stretcher / Crispin
-    + [1197] * 3 + [1081] * 3              # Xerosic's Machinations / Enhanced Hammer
-    + [1129] * 2 + [1266] * 2              # Sacred Ash / Nighttime Mine
-    + [5] * 12                              # Basic Psychic Energy
-)
-BASIC_POKEMON_IDS = {741, 305, 140, 1006, 554, 625, 328, 299, 39, 390}
+# DECK and BASIC_POKEMON_IDS live in arena_config (single source of truth);
+# imported at the top of this module. Never redeclare them here.
 
 
 def load_creds():
@@ -251,7 +252,7 @@ def error_code(resp):
     return None
 
 
-def choose_action(pending_entry, belief_heuristic=None):
+def _choose_action(pending_entry, belief_heuristic=None):
     legal = pending_entry.get("legalActions") or []
     if not legal:
         return None
@@ -274,6 +275,24 @@ def choose_action(pending_entry, belief_heuristic=None):
     # Card-aware fallback (the obs has no damage field; options use type/attackId).
     chosen = best_action(obs, legal)
     return chosen if chosen is not None else legal[0]
+
+
+def choose_action(pending_entry, belief_heuristic=None):
+    """Decision entry point shared by bot.py and bot_async.py.
+
+    Chooses exactly as before, then records one telemetry line. Telemetry can
+    never change the choice or raise into the play loop.
+    """
+    started = time.monotonic()
+    choice = _choose_action(pending_entry, belief_heuristic)
+    if choice is not None and telemetry is not None:
+        try:
+            telemetry.record(
+                pending_entry, choice, (time.monotonic() - started) * 1000.0
+            )
+        except Exception:
+            pass
+    return choice
 
 
 def play_loop(api_key, agent_id, ruflo=None):

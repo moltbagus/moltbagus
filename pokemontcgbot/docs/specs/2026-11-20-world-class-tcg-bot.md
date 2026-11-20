@@ -8,6 +8,17 @@ Owner: Colbert Low. Season under test: `[TCG] Playground S7` `cmwm3cekx011nln01c
 
 ---
 
+## 0. Delivery log (evidence, newest first)
+
+| Date | Unit | Evidence |
+|---|---|---|
+| 2026-11-20 | **Telemetry** — `telemetry.py` records one JSON line per decision (input, choice, scored alternatives, board, latency, policy version), wired once in `bot.choose_action`; measured **0.022 ms** per record | `tests/test_telemetry.py`, full suite `116 passed, 4 skipped`; records land at `~/.arena-tcg-decisions.jsonl` |
+| 2026-11-20 | **Season identity closed (§8 gap 2)** — `DECK`, `BASIC_POKEMON_IDS` and `POLICY_VERSION` exist only in `arena_config.py`; both entrypoints import them | `tests/test_arena_config.py::test_deck_is_one_object_across_entrypoints`, `::test_no_module_redeclares_the_deck` |
+| 2026-11-20 | **Restart gate fixed** — `restart_when_idle.sh` carried the **S6** competition id, so its "is a match running?" probe read 0 while S7 had a live match and the restart killed it; it now reads `arena_config` | `tests/test_deploy_scripts.py::test_restart_script_reads_the_season_from_arena_config` |
+| 2026-11-20 | **Deploy list fixed** — `.agent-team/sync-live.sh` did not copy `arena_config.py` or `telemetry.py`, so a sync could ship an entrypoint whose import was missing | `tests/test_deploy_scripts.py::test_sync_live_deploys_every_module` |
+
+---
+
 ## 1. Definition of "world-class" (pre-registered, no post-hoc thresholds)
 
 Measured on the S7 board on 2026-11-20:
@@ -279,8 +290,8 @@ mutating the live `DECK` under a locked competition.
 
 ## 7. Telemetry, evaluation, and promotion rules
 
-`telemetry.py` writes one JSON line per decision (the bot currently logs only
-`match seq -> [i] : status`, which cannot be replayed offline):
+`telemetry.py` writes one JSON line per decision (before 2026-11-20 the bot
+logged only `match seq -> [i] : status`, which cannot be replayed offline):
 
 ```json
 {"ts":0,"matchId":"","seq":0,"turn":0,"selectType":0,"context":0,"nOptions":7,
@@ -317,9 +328,10 @@ Gaps:
    transport retry.** A status-0 POST prints and moves on (`bot.py:353-380`), which is
    exactly the unacknowledged-decision forfeit the async path fixed. Port
    `post_action` into the sync path or run `bot_async.py` in the unit.
-2. **`bot.py` and `bot_async.py` hold two copies of `DECK`** (`bot.py:55`,
-   `bot_async.py:59`) and two of `BASIC_POKEMON_IDS`. One `arena_config.py` import,
-   plus a test that the two entrypoints see the same object.
+2. **CLOSED 2026-11-20.** `bot.py` and `bot_async.py` each held a copy of `DECK`
+   and `BASIC_POKEMON_IDS` (`bot.py:55`, `bot_async.py:59`). Both now import them
+   from `arena_config`, and `test_no_module_redeclares_the_deck` fails if a second
+   literal reappears.
 
 Latency budget: p95 decision ≤ 400 ms, hard fail ≤ 1.5 s
 (`tests/test_decision_latency.py` exists in the repo checkout but not in the working

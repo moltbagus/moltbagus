@@ -35,7 +35,7 @@ except ImportError:
     HAS_RUFLO = False
 
 # Shared action selection + Ruflo result mapping (single implementation).
-from arena_config import COMPETITION_ID, SEASON_NUMBER
+from arena_config import BASIC_POKEMON_IDS, COMPETITION_ID, DECK, SEASON_NUMBER
 from bot import (
     _write_state,
     acquire_single_instance_lock,
@@ -54,21 +54,8 @@ PENDING_TIMEOUT = 3.0
 JOIN_TIMEOUT = 5.0
 RESULTS_TIMEOUT = 5.0
 
-# New high-HP deck (will be locked on first join — use sandbox for changes)
-# S7 deck: Alakazam / Dudunsparce / Fezandipiti with the Audino package.
-DECK = (
-    [741] * 3 + [742] * 2 + [245] * 2
-    + [305] * 3 + [306] * 2
-    + [140] * 2
-    + [1006] * 2 + [554] * 2
-    + [1086] * 4 + [1152] * 4
-    + [1231] * 3 + [1182] * 3
-    + [1097] * 3 + [1198] * 3
-    + [1197] * 3 + [1081] * 3
-    + [1129] * 2 + [1266] * 2
-    + [5] * 12
-)
-BASIC_POKEMON_IDS = {741, 305, 140, 1006, 554, 625, 328, 299, 39, 390}
+# DECK and BASIC_POKEMON_IDS come from arena_config (single source of truth).
+# The deck is locked on first join of a competition; change it in a sandbox.
 
 # Global instances
 BELIEF_HEURISTIC = None
