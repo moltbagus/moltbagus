@@ -63,6 +63,9 @@ CARD_HP: Dict[int, int] = {
     554: 100,
 }
 
+# Cards that count as Pokemon ex for effect damage. Mega ex counts as ex.
+EX_CARD_IDS = {140, 306, 1006}
+
 # Select option type codes observed in arena decision logs.
 OPTION_CHOOSE_CARD = 3
 OPTION_PLAY = 7
@@ -72,6 +75,43 @@ OPTION_ABILITY = 10
 OPTION_RETREAT = 12
 OPTION_ATTACK = 13
 OPTION_END_TURN = 14
+
+
+def _energy_count(card: Any) -> int:
+    if not isinstance(card, dict):
+        return 0
+    energies = card.get("energies")
+    return len(energies) if isinstance(energies, list) else 0
+
+
+def _opponent_ex_count(obs: Any) -> int:
+    players = players_of(obs)
+    oi = opponent_index(obs)
+    if not 0 <= oi < len(players):
+        return 0
+    player = players[oi] or {}
+    cards = list(player.get("active") or []) + list(player.get("bench") or [])
+    count = 0
+    for card in cards:
+        if isinstance(card, dict) and card.get("id") in EX_CARD_IDS:
+            count += 1
+    return count
+
+
+def real_damage(attack_id: int, obs: Any) -> int:
+    """Return expected damage after the attack's printed effect scaling."""
+    base = ATTACK_DAMAGE.get(attack_id, 0)
+    target = opponent_active(obs)
+    target_energy = _energy_count(target)
+    if attack_id == 1454:  # Ear Force: 20 + 80 per energy on the opponent's Active
+        return 20 + 80 * target_energy
+    if attack_id == 339:  # Psychic: 10 + 50 per energy on the opponent's Active
+        return 10 + 50 * target_energy
+    if attack_id == 425:  # Tenacious Tail: 60 per opponent ex in play
+        return 60 * _opponent_ex_count(obs)
+    if attack_id == 183:  # Cruel Arrow: 100 to one chosen Pokemon
+        return 100
+    return base
 
 
 def select_of(obs: Any) -> dict:
@@ -233,7 +273,7 @@ def option_score(option: Any, obs: Any, belief: Any = None) -> float:
             attack_id = int(option.get("attackId") or 0)
         except (TypeError, ValueError):
             attack_id = 0
-        damage = ATTACK_DAMAGE.get(attack_id, 0)
+        damage = real_damage(attack_id, obs)
         score = 60.0 + damage * 1.5
         target = opponent_active(obs)
         if target is not None and damage:
@@ -396,8 +436,39 @@ def _best_attack_damage(obs: Any, legal_actions: Sequence[str]) -> int:
             attack_id = int(option.get("attackId") or 0)
         except (TypeError, ValueError):
             attack_id = 0
-        best = max(best, ATTACK_DAMAGE.get(attack_id, 0))
+        best = max(best, real_damage(attack_id, obs))
     return best
+
+
+def _in_play_value(obs: Any, option: dict) -> float:
+    """Board value of the Pokemon an evolve option targets."""
+    area = option.get("inPlayArea")
+    index = option.get("inPlayIndex", 0)
+    players = players_of(obs)
+    yi = your_index(obs)
+    if not 0 <= yi < len(players):
+        return 0.0
+    player = players[yi] or {}
+    if area == 4:
+        cards = player.get("active") or []
+        bonus = 5.0
+    elif area == 5:
+        cards = player.get("bench") or []
+        bonus = 0.0
+    else:
+        return 0.0
+    try:
+        card = cards[int(index)]
+    except (IndexError, TypeError, ValueError):
+        return 0.0
+    if not isinstance(card, dict):
+        return 0.0
+    try:
+        hp = float(card.get("hp", 0))
+        max_hp = float(card.get("maxHp", 0))
+    except (TypeError, ValueError):
+        hp = max_hp = 0.0
+    return bonus + hp / 10.0 + max_hp / 20.0 + _energy_count(card) * 5.0
 
 
 def best_development_action(
@@ -423,7 +494,7 @@ def best_development_action(
             continue
         option_type = option.get("type")
         if option_type == OPTION_EVOLVE:
-            candidates.append((90.0, action))
+            candidates.append((90.0 + _in_play_value(obs, option), action))
         elif option_type == OPTION_ABILITY:
             candidates.append((70.0, action))
         elif option_type == OPTION_PLAY and allow_play:

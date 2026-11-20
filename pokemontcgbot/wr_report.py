@@ -14,6 +14,8 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import os
+import subprocess
 import sys
 import urllib.error
 import urllib.parse
@@ -28,6 +30,55 @@ DEFAULT_CREDS = Path.home() / ".arena-credentials"
 API_BASE = "https://arena.dev.fun/api/arena"
 from arena_config import AGENT_ID as DEFAULT_AGENT_ID
 from arena_config import COMPETITION_ID as DEFAULT_COMPETITION_ID
+
+
+def _git_commit() -> str:
+    try:
+        out = subprocess.check_output(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=SCRIPT_DIR,
+            stderr=subprocess.DEVNULL,
+            text=True,
+        )
+        return out.strip() or "unknown"
+    except (OSError, subprocess.SubprocessError):
+        return "unknown"
+
+
+def _service_binding() -> tuple[str, str]:
+    try:
+        out = subprocess.check_output(
+            [
+                "systemctl",
+                "--user",
+                "show",
+                "-p",
+                "MainPID",
+                "-p",
+                "ActiveEnterTimestamp",
+                "--value",
+                "tcg-bot.service",
+            ],
+            stderr=subprocess.DEVNULL,
+            text=True,
+        )
+        lines = [line.strip() for line in out.splitlines() if line.strip()]
+        if len(lines) >= 2:
+            return lines[0], lines[1]
+    except (OSError, subprocess.SubprocessError):
+        pass
+    return "unknown", "unknown"
+
+
+def binding_fields() -> dict:
+    """Fields that bind a report to the code and process that produced it."""
+    pid, start = _service_binding()
+    return {
+        "commit": os.environ.get("ARENA_COMMIT") or _git_commit(),
+        "bot_pid": os.environ.get("ARENA_BOT_PID") or pid,
+        "bot_start": os.environ.get("ARENA_BOT_START") or start,
+        "competition_id": DEFAULT_COMPETITION_ID,
+    }
 
 SHANGHAI = timezone(timedelta(hours=8))
 Z95 = 1.959963984540054
@@ -393,6 +444,7 @@ def build_report(
         "since_epoch_ms": since_ms,
         "competition_id": competition_id,
         "agent_id": agent_id,
+        "binding": binding_fields(),
         "window": {
             "matches": summary["matches"],
             "wins": summary["wins"],
