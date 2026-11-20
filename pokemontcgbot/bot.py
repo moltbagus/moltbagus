@@ -22,6 +22,7 @@ from arena_config import (
     COMPETITION_ID,
     DECK,
     DECK_THESIS,
+    DECK_VERSION,
     POLICY_VERSION,
     SEASON_NUMBER,
 )
@@ -201,8 +202,12 @@ def match_result_from_api(match, our_agent_id):
         result=outcome,
         opponent=opponent,
         actions=actions,
-        deck_version="druddigon-v2",
-        heuristic="belief-ismcts",
+        # Labels come from the single config module. They used to be hardcoded
+        # ("druddigon-v2" / "belief-ismcts"), which labelled every S7 match with
+        # a deck and a search that were not in play and poisoned the promotion
+        # gate (§7 attribution).
+        deck_version=DECK_VERSION,
+        heuristic=POLICY_VERSION,
         notes=reason,
     )
 

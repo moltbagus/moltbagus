@@ -67,6 +67,85 @@ def _current_of(obs: Any) -> Dict[str, Any]:
     return current if isinstance(current, dict) else {}
 
 
+def _capped(value: Any, limit: int = 60) -> Any:
+    """Keep the first ``limit`` entries of a list; pass everything else through."""
+    if isinstance(value, list):
+        return value[:limit]
+    return value
+
+
+def _prune_obs(obs: Any, option_limit: int = 200) -> Optional[Dict[str, Any]]:
+    """The part of the observation a policy needs, so the corpus can be replayed.
+
+    ``current.logs`` is dropped (it can hold the whole turn history) and every
+    card list is capped, because a deck never exceeds 60 cards. Everything
+    ``scoring`` reads is kept: board, energies, hand counts, prizes and the
+    whole select block.
+    """
+    if not isinstance(obs, dict):
+        return None
+    current = _current_of(obs)
+    select = select_of(obs)
+
+    kept_current: Dict[str, Any] = {}
+    for key in (
+        "turn",
+        "turnActionCount",
+        "yourIndex",
+        "firstPlayer",
+        "supporterPlayed",
+        "stadiumPlayed",
+        "energyAttached",
+        "retreated",
+        "stadium",
+        "looking",
+        "result",
+    ):
+        if key in current:
+            kept_current[key] = _capped(current[key])
+
+    players: List[Dict[str, Any]] = []
+    for player in players_of(obs):
+        if not isinstance(player, dict):
+            continue
+        players.append(
+            {
+                "active": _capped(player.get("active") or []),
+                "bench": _capped(player.get("bench") or []),
+                "deckCount": player.get("deckCount"),
+                "discard": _capped(player.get("discard") or []),
+                "prize": _capped(player.get("prize") or []),
+                "handCount": player.get("handCount"),
+                "hand": player.get("hand"),  # null in remote play; kept when present
+                "poisoned": player.get("poisoned"),
+                "burned": player.get("burned"),
+                "asleep": player.get("asleep"),
+                "paralyzed": player.get("paralyzed"),
+                "confused": player.get("confused"),
+            }
+        )
+    kept_current["players"] = players
+
+    kept_select: Dict[str, Any] = {}
+    for key in (
+        "type",
+        "context",
+        "minCount",
+        "maxCount",
+        "remainDamageCounter",
+        "remainEnergyCost",
+        "contextCard",
+        "effect",
+    ):
+        if key in select:
+            kept_select[key] = select[key]
+    kept_select["option"] = _capped(select.get("option") or [], option_limit)
+    if select.get("deck") is not None:
+        kept_select["deck"] = _capped(select.get("deck"), 60)
+
+    return {"current": kept_current, "select": kept_select}
+
+
 def _state_snapshot(obs: Any) -> Dict[str, Any]:
     """Compact board snapshot: ours in full, the opponent's public board."""
     current = _current_of(obs)
@@ -148,6 +227,8 @@ def build_record(
         "latencyMs": round(float(latency_ms), 3),
         "scores": chosen_scores,
         "candidates": candidates,
+        "legalActions": legal,
+        "obs": _prune_obs(obs),
         "state": _state_snapshot(obs),
         "policyVersion": policy_version,
     }

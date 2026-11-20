@@ -38,5 +38,9 @@ BASIC_POKEMON_IDS = frozenset({741, 305, 140, 1006, 554, 625, 328, 299, 39, 390}
 # record carries it so an offline replay can attribute a choice to a policy.
 POLICY_VERSION = "l0-2026-11-20"
 
+# Identity of the 60-card list, recorded on every match so Ruflo's history can
+# be split by deck. Bump it when the deck changes — never per-decision.
+DECK_VERSION = "s7-audino-v1"
+
 # One JSON line per decision point (spec 7).
 TELEMETRY_PATH = Path.home() / ".arena-tcg-decisions.jsonl"

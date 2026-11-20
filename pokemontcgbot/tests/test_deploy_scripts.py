@@ -46,6 +46,7 @@ def test_sync_live_deploys_every_module():
     for module in (
         "arena_config.py",
         "telemetry.py",
+        "replay.py",
         "bot.py",
         "bot_async.py",
         "scoring.py",

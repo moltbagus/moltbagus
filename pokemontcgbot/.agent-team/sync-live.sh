@@ -18,7 +18,7 @@ WT="$(jq -r '.worktree' "$RUN")"
 SUBDIR="$(jq -r '.subdir' "$RUN")"
 LIVE="$(jq -r '.live_dir' "$RUN")"
 
-for f in arena_config.py telemetry.py bot.py bot_async.py belief.py ismcts.py ruflo_tcg.py scoring.py wr_report.py pytest.ini GOVERNANCE.md PRD.md spec.md restart_when_idle.sh; do
+for f in arena_config.py telemetry.py replay.py bot.py bot_async.py belief.py ismcts.py ruflo_tcg.py scoring.py wr_report.py pytest.ini GOVERNANCE.md PRD.md spec.md restart_when_idle.sh; do
   if [ -f "$WT/$SUBDIR/$f" ]; then
     cp -a "$WT/$SUBDIR/$f" "$LIVE/$f"
   fi
