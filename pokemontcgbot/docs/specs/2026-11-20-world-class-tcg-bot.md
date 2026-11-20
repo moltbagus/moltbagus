@@ -16,6 +16,7 @@ Owner: Colbert Low. Season under test: `[TCG] Playground S7` `cmwm3cekx011nln01c
 | 2026-11-20 | **Season identity closed (§8 gap 2)** — `DECK`, `BASIC_POKEMON_IDS` and `POLICY_VERSION` exist only in `arena_config.py`; both entrypoints import them | `tests/test_arena_config.py::test_deck_is_one_object_across_entrypoints`, `::test_no_module_redeclares_the_deck` |
 | 2026-11-20 | **Restart gate fixed** — `restart_when_idle.sh` carried the **S6** competition id, so its "is a match running?" probe read 0 while S7 had a live match and the restart killed it; it now reads `arena_config` | `tests/test_deploy_scripts.py::test_restart_script_reads_the_season_from_arena_config` |
 | 2026-11-20 | **Deploy list fixed** — `.agent-team/sync-live.sh` did not copy `arena_config.py` or `telemetry.py`, so a sync could ship an entrypoint whose import was missing | `tests/test_deploy_scripts.py::test_sync_live_deploys_every_module` |
+| 2026-11-20 | **Test/live isolation** — running the suite wrote 12 synthetic decisions into the production log; `conftest.py` now redirects `ARENA_TELEMETRY_PATH` and telemetry resolves its path at call time | `tests/test_telemetry.py::test_env_override_keeps_test_runs_out_of_the_live_log`; live log repopulated with real S7 records only |
 
 ---
 
