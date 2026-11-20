@@ -17,6 +17,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+from arena_config import COMPETITION_ID, SEASON_NUMBER, DECK_THESIS
 from scoring import best_action
 
 # Belief tracking + ISMCTS search
@@ -424,10 +425,10 @@ def main():
     try:
         _write_state({
             "competition_id": COMPETITION_ID,
-            "season_number": 6,
+            "season_number": SEASON_NUMBER,
             "deck": DECK,
             "deck_locked": True,
-            "deck_thesis": "Mixed high-HP 0-energy attackers: Druddigon(40dmg) + Pikachu ex(190HP) + Hop's Zacian ex(230HP) + Enamorus + Tauros + 40 Grass Energy",
+            "deck_thesis": DECK_THESIS,
             "belief_enabled": HAS_BELIEF,
             "ruflo_enabled": HAS_RUFLO,
             "matches_played": 0,

@@ -26,8 +26,8 @@ DEFAULT_EVIDENCE = SCRIPT_DIR / "evidence" / "wr-report.json"
 DEFAULT_CREDS = Path.home() / ".arena-credentials"
 
 API_BASE = "https://arena.dev.fun/api/arena"
-DEFAULT_COMPETITION_ID = "cmw99opb57gssgfb7rj39a1o1"
-DEFAULT_AGENT_ID = "cmqogaydkdghsnq1ql4t9anjt"
+from arena_config import AGENT_ID as DEFAULT_AGENT_ID
+from arena_config import COMPETITION_ID as DEFAULT_COMPETITION_ID
 
 SHANGHAI = timezone(timedelta(hours=8))
 Z95 = 1.959963984540054

@@ -35,6 +35,7 @@ except ImportError:
     HAS_RUFLO = False
 
 # Shared action selection + Ruflo result mapping (single implementation).
+from arena_config import COMPETITION_ID, SEASON_NUMBER
 from bot import (
     _write_state,
     acquire_single_instance_lock,
@@ -45,7 +46,6 @@ from bot import (
 )
 
 CREDS_PATH = Path.home() / ".arena-credentials"
-COMPETITION_ID = "cmwm3cekx011nln01c3gqi0tc"
 BASE_URL = "https://arena.dev.fun/api/arena"
 STATE_PATH = Path.home() / ".arena-tcg-state"
 
@@ -375,7 +375,7 @@ async def main():
         try:
             _write_state({
                 "competition_id": COMPETITION_ID,
-                "season_number": 6,
+                "season_number": SEASON_NUMBER,
                 "deck": DECK,
                 "deck_locked": True,
                 "async": True,
