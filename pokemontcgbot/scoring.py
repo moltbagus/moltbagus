@@ -449,10 +449,11 @@ def best_action(obs: Any, legal_actions: Sequence[str], belief: Any = None) -> O
         attach = best_attach_action(obs, legal)
         if attach is not None:
             return attach
-    # Developing the board (evolve/ability, or a trainer before a 0-damage
-    # attack) must happen before an attack, because an attack ends the turn.
-    attack_damage = _best_attack_damage(obs, legal)
-    development = best_development_action(obs, legal, allow_play=attack_damage == 0)
+    # Developing the board must happen before an attack, because an attack
+    # ends the turn. Trainer plays do not end the turn; an empty bench makes
+    # this critical because a lone Basic in hand is the only way to avoid
+    # losing to no_active_pokemon.
+    development = best_development_action(obs, legal, allow_play=True)
     if development is not None:
         return development
     best = legal[0]
