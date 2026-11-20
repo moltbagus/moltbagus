@@ -67,6 +67,7 @@ CARD_HP: Dict[int, int] = {
 OPTION_CHOOSE_CARD = 3
 OPTION_PLAY = 7
 OPTION_ATTACH = 8
+OPTION_EVOLVE = 9
 OPTION_ABILITY = 10
 OPTION_RETREAT = 12
 OPTION_ATTACK = 13
@@ -247,6 +248,8 @@ def option_score(option: Any, obs: Any, belief: Any = None) -> float:
         return 45.0
     if option_type == OPTION_ATTACH:
         return 25.0
+    if option_type == OPTION_EVOLVE:
+        return 80.0
     if option_type == OPTION_ABILITY:
         return 20.0
     if option_type == OPTION_RETREAT:
@@ -364,6 +367,62 @@ def best_attach_action(obs: Any, legal_actions: Sequence[str]) -> Optional[str]:
     return attach[0][1]
 
 
+def _best_attack_damage(obs: Any, legal_actions: Sequence[str]) -> int:
+    """Return the best printed damage among legal attack options."""
+    options = select_of(obs).get("option") or []
+    best = 0
+    for action in legal_actions:
+        indices = parse_action_indices(action)
+        if len(indices) != 1:
+            continue
+        index = indices[0]
+        if not 0 <= index < len(options):
+            continue
+        option = options[index]
+        if not isinstance(option, dict) or option.get("type") != OPTION_ATTACK:
+            continue
+        try:
+            attack_id = int(option.get("attackId") or 0)
+        except (TypeError, ValueError):
+            attack_id = 0
+        best = max(best, ATTACK_DAMAGE.get(attack_id, 0))
+    return best
+
+
+def best_development_action(
+    obs: Any, legal_actions: Sequence[str], allow_play: bool = True
+) -> Optional[str]:
+    """Return an evolution/ability/play action that does not end the turn.
+
+    Attacking ends the turn, so evolve and ability options are always taken
+    first. Trainer plays are taken first only when the best attack does zero
+    printed damage; otherwise a damaging attack is still allowed.
+    """
+    options = select_of(obs).get("option") or []
+    candidates: List[tuple[float, str]] = []
+    for action in legal_actions:
+        indices = parse_action_indices(action)
+        if len(indices) != 1:
+            continue
+        index = indices[0]
+        if not 0 <= index < len(options):
+            continue
+        option = options[index]
+        if not isinstance(option, dict):
+            continue
+        option_type = option.get("type")
+        if option_type == OPTION_EVOLVE:
+            candidates.append((90.0, action))
+        elif option_type == OPTION_ABILITY:
+            candidates.append((70.0, action))
+        elif option_type == OPTION_PLAY and allow_play:
+            candidates.append((50.0, action))
+    if not candidates:
+        return None
+    candidates.sort(key=lambda item: -item[0])
+    return candidates[0][1]
+
+
 def action_score(action: Any, obs: Any, belief: Any = None) -> float:
     """Score a legal action string; multi-select actions sum their options."""
     indices = parse_action_indices(action)
@@ -390,6 +449,12 @@ def best_action(obs: Any, legal_actions: Sequence[str], belief: Any = None) -> O
         attach = best_attach_action(obs, legal)
         if attach is not None:
             return attach
+    # Developing the board (evolve/ability, or a trainer before a 0-damage
+    # attack) must happen before an attack, because an attack ends the turn.
+    attack_damage = _best_attack_damage(obs, legal)
+    development = best_development_action(obs, legal, allow_play=attack_damage == 0)
+    if development is not None:
+        return development
     best = legal[0]
     best_score = action_score(best, obs, belief)
     for action in legal[1:]:
