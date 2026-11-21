@@ -1,0 +1,91 @@
+{
+  "schema": "aidevops.repo-metrics.v1",
+  "schema_version": 1,
+  "generated_at": "2026-11-21T16:54:33Z",
+  "tool": {
+    "name": "aidevops repo-metrics",
+    "version": "1.0.0"
+  },
+  "repo": {
+    "name": "moltbagus",
+    "slug": "moltbagus/moltbagus"
+  },
+  "summary": {
+    "source_files": 73,
+    "code": 11444,
+    "comments": 259,
+    "blanks": 1803,
+    "languages": 6,
+    "dependencies": 0
+  },
+  "languages": [
+    {
+      "name": "Python",
+      "files": 39,
+      "code": 5728,
+      "comments": 228,
+      "blanks": 1295,
+      "percentage": 50.05,
+      "color": "#3572A5"
+    },
+    {
+      "name": "JSON",
+      "files": 3,
+      "code": 3582,
+      "comments": 0,
+      "blanks": 0,
+      "percentage": 31.3,
+      "color": "#292929"
+    },
+    {
+      "name": "Markdown",
+      "files": 24,
+      "code": 1870,
+      "comments": 0,
+      "blanks": 475,
+      "percentage": 16.34,
+      "color": "#083fa1"
+    },
+    {
+      "name": "Shell",
+      "files": 4,
+      "code": 139,
+      "comments": 16,
+      "blanks": 23,
+      "percentage": 1.21,
+      "color": "#89e051"
+    },
+    {
+      "name": "YAML",
+      "files": 1,
+      "code": 65,
+      "comments": 15,
+      "blanks": 10,
+      "percentage": 0.57,
+      "color": "#cb171e"
+    },
+    {
+      "name": "SVG",
+      "files": 2,
+      "code": 60,
+      "comments": 0,
+      "blanks": 0,
+      "percentage": 0.52,
+      "color": "#6e7781"
+    }
+  ],
+  "dependencies": {
+    "direct": 0,
+    "runtime": 0,
+    "dev": 0,
+    "locked": 0,
+    "total": 0,
+    "ecosystems": [],
+    "manifests": []
+  },
+  "refresh": {
+    "default_policy": "weekly scheduled refresh plus manual runs; skip generated outputs younger than 24h in managed workflows",
+    "cost_profile": "fast local git/unignored-file scan; no network by default",
+    "top_languages": 6
+  }
+}
