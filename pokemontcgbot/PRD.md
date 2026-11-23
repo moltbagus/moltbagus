@@ -52,3 +52,17 @@ Ship a minimal but legal bot that can join `[TCG] Playground S6`, play matches w
 - M4: Hand off to stronger heuristic (Phase 3).
 - M5: Belief tracker integrated into bot (Phase 2.5).
 - M6: ISMCTS search engine (Phase 4).
+
+## Current state — 2026-11-23
+- Live competition: `[TCG] Playground S7` (`cmwm3cekx011nln01c3gqi0tc`); deck locked for the season (18 Pokémon / 30 Trainers / 12 Psychic Energy, Audino core).
+- Supervisor: pm2 service `tcg-bot`, one poller behind `~/.arena-tcg.lock`. Do not run systemd and pm2 together.
+- Live policy: S7 Audino deck, post-bench-fix scoring, belief-weighted ISMCTS. No decision-affecting change has shipped since 2026-11-20 23:01 +08.
+- Measured outcome: 995 S7 matches, 221 W = 22.21% (Wilson 95% CI 19.74–24.90%, p=0.473 vs 21.28% baseline). Post-2026-11-20 build: 686 matches, 108 W = 15.74% (CI 13.21–18.66%, p=0.0000 vs 36.02%). Today: 160 matches, 21 W = 13.12% (p=0.0053 vs 22.29%). This is a regression, not an improvement.
+- World-class gates remain unmet. Top-3 S7 bots run ~47–59%; this bot ranks near bottom.
+
+## New plans / backlogs
+- P0: find and fix the regression introduced by the 2026-11-20 policy build using red-team replay of real losses; rollback to the last known-good commit is a candidate, not a measured result.
+- P1: prepare a catalog-validated S8 deck offline; no live deck change until the season resets or the owner approves a new agent.
+- P2: keep the offline v2 package (`devfun_tcg_bot/`) as reference/adapter only. It is not imported by the live loop and is not evidence of live improvement.
+- P3: paid [TCG] Stakes entry, bankroll automation, and wallet/payment flows are out of scope until explicitly authorized with a loss cap.
+

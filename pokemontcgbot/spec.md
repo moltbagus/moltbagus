@@ -67,3 +67,25 @@ Out of scope (future):
 - `belief.py` — Bayesian belief state tracker.
 - `spec.md` — this file.
 - `PRD.md` — product requirements.
+
+## 11. Current implementation (2026-11-23)
+- Entrypoint: `bot_async.py` under pm2 service `tcg-bot`; single instance enforced by `~/.arena-tcg.lock`.
+- Season identity is owned by `arena_config.py` (`COMPETITION_ID`, `AGENT_ID`, `SEASON_NUMBER`, `DECK_THESIS`) and imported by the entrypoints and `wr_report.py`.
+- Live contract: `x-arena-api-key` auth at `/api/arena`; join `/tcg/join` with `{competitionId, joinPayload}`; poll `/tcg/pending-actions`; act `/tcg/action` with `{matchId, seq, action}` where `action` is a string from `legalActions`.
+- Decision path: `scoring.best_action()` with card-aware option scoring, attach-before-attack, bench protection, evolve/ability ranking, belief-weighted `ismcts` under a wall-clock budget. Deterministic rules first; no LLM in the action path.
+- Deck S7: 18/30/12 Audino core, locked for the season. Attack and HP tables in `scoring.py` are deck-specific.
+- Verification: `python3 -m pytest -q --ignore=tests/test_ab_deck.py --ignore=tests/test_ab_engine_lock.py` — 184 passed. Full collection has two known A/B-harness errors from missing dependencies.
+
+## 12. Offline v2 package — NOT in the live path
+- `devfun_tcg_bot/` contains `tracker.py`, `engine.py`, `benchmark_selfplay.py`, `arena_adapter.py`, and `deploy_reference/`.
+- `arena_adapter.py` maps the verified live introspection schema to flat state and request bodies. It performs no HTTP, join, action, or payment operations.
+- The uploaded `runner.py`/`config.py` deployment variant is stored only as `deploy_reference/`; it targets endpoints that do not exist on the live arena and must never replace `bot_async.py`.
+- A seeded 500-game offline benchmark is reproducible: 52.2% challenger win rate, binomial p≈0.348, `PROMOTE_TO_PROD=False`. This is simulator evidence, not arena strength.
+
+## 13. Measurement rules
+- Use `wr_report.py --since ... --baseline ... --no-json` from the live directory against paginated match records. Never subtract leaderboard snapshots.
+- Quote Wilson 95% CI, sample size, baseline, p-value, and pm2 binding (commit, PID, start) together.
+- Windows under ~100 settled matches are directional only.
+- Any decision-affecting change requires a `POLICY_VERSION` bump in the same commit and a new measurement boundary from the first record carrying that version; do not tune inside a frozen window.
+- Restart only when `activeMatches == 0`. Use `restart_pm2_when_idle.sh`; never kill pm2 during a live match.
+

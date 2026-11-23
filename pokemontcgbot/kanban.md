@@ -27,18 +27,35 @@
 - [ ] Top-10 scouting — awaiting worker execution of t_43a9d6bc
 - [ ] Full ISMCTS — needs game simulator (ptcg-engine)
 
-## Win Rate (2026-11-14)
-- Rank: 56 / 96+ agents
-- Total submissions: 96
-- Wins: 28 (29.2% from agent stats)
-- Sampled 50 matches: 18 wins, 32 losses (36.0%)
-- Loss reasons: 33 "no_active_pokemon", 17 "timeout_forfeit"
-- Total score: -25.86
-- Form (last 10): W L L L L L L L L W
+## Win Rate (2026-11-23, S7)
+- 995 matches, 221 W = 22.21%; Wilson 95% CI [19.74%, 24.90%]; p=0.473 vs 21.28% baseline — no improvement.
+- Since 2026-11-20 23:01 policy build: 686 matches, 108 W = 15.74%; CI [13.21%, 18.66%]; p=0.0000 vs 36.02% — significant regression.
+- Since 2026-11-23 00:00: 160 matches, 21 W = 13.12%; p=0.0053 vs 22.29%.
+- Rank near bottom of S7; top bots at ~47–59%. World-class gates not met.
+
+## Done (updated 2026-11-23)
+- [x] Verified real arena contract from `/api/arena/__introspection`: `x-arena-api-key`, `joinPayload`, `pending`/`activeMatches`, `{matchId, seq, action}`.
+- [x] Offline v2 package: tracker, engine, expectimax, reproducible paired-seed benchmark, Docker image, and real-schema adapter.
+- [x] Privacy guard fix in committed README; HEAD == origin/main before docs update.
+
+## In Progress (2026-11-23)
+- [ ] Idle-gated pm2 restart of `tcg-bot` (activeMatches was 1 when checked; watcher waits for 0).
+- [ ] Repo → WSL live sync of docs and offline reference files.
+
+## Blocked
+- [ ] MacBook M5 git sync: Tailscale host `colb-m5-macbook-air` is reachable by ping, but SSH on port 22 and 41641 is refused; Tailscale SSH returns 502. Need SSH/Tailscale SSH enabled on the Mac or an alternate sync path.
+- [ ] Stakes/wallet/payment flow: no owner authorization or loss cap.
+- [ ] Full ISMCTS game-tree simulation: pinned engine does not implement the S7 deck cards.
+
+## Backlog (2026-11-23)
+- [ ] P0 red-team replay of post-2026-11-20 losses; rank fix vs rollback to last known-good commit.
+- [ ] P1 prepare catalog-validated S8 deck offline; no live deck change until reset or new-agent approval.
+- [ ] P2 decision telemetry: one JSON line per decision with matchId, seq, chosen, latencyMs, bench, prizes.
+- [ ] P3 wallet/payment/Stakes support only after explicit owner authorization.
 
 ## Notes
-- Season: [TCG] Playground S6 (cmw99opb57gssgfb7rj39a1o1)
-- Agent: sirshibaninjabot02 (cmqogaydkdghsnq1ql4t9anjt)
-- Credentials: /home/colb/.arena-credentials
-- State: /home/colb/.hermes/state/tcgbot/
-- Repo: /home/colb/Git/moltbagus/pokemontcgbot/
+- Season: [TCG] Playground S7 (`cmwm3cekx011nln01c3gqi0tc`).
+- Agent: `cmqogaydkdghsnq1ql4t9anjt`.
+- Credentials: `~/.arena-credentials` (never commit or print).
+- State: `~/.hermes/state/tcgbot/`.
+- Repo: canonical checkout with `pokemontcgbot/` as the code subdirectory; WSL live working copy is separate and must be diffed before copying.
