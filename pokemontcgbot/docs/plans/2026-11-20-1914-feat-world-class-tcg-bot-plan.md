@@ -146,6 +146,8 @@ AE5. **Replay regression.**
 - Not building a full PTCGL engine, a transformer policy, or a self-play training loop in this plan.
 - **Deferred to the next season:** deck deployment and live join. The current season deck is locked.
 - **Blocked:** offline A/B cannot gate the deck change until the engine supports the season card pool.
+- **Blocked:** self-play arena needs engine parity for the S7 card pool. A proxy deck is not arena evidence.
+- **Escalated:** dev.fun OpenTokens inference needs owner approval, a `devfun_sk_` key supplied by file path, a credit cap, and an offline-only evaluation. No inference call may enter the live action loop.
 - Not claiming a win-rate improvement from a sub-100 window or a leaderboard delta.
 - New agents, paid entries, and hosted deploys remain owner-approved actions.
 
