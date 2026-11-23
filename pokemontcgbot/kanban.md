@@ -39,8 +39,8 @@
 - [x] Privacy guard fix in committed README; HEAD == origin/main before docs update.
 
 ## In Progress (2026-11-23)
-- [ ] Idle-gated pm2 restart of `tcg-bot` (activeMatches was 1 when checked; watcher waits for 0).
-- [ ] Repo → WSL live sync of docs and offline reference files.
+- [x] Idle-gated pm2 restart of `tcg-bot`: `activeMatches == 0` at 2026-11-23T16:08:07+08; `pm2 restart` completed 16:08:08+08; new PID 2587190, restarts=3. Single poller confirmed. Live loop MD5 unchanged — restart loaded the same code, not new code.
+- [x] Repo → WSL live sync of docs and offline reference files.
 
 ## Blocked
 - [ ] MacBook M5 git sync: Tailscale host `colb-m5-macbook-air` is reachable by ping, but SSH on port 22 and 41641 is refused; Tailscale SSH returns 502. Need SSH/Tailscale SSH enabled on the Mac or an alternate sync path.
