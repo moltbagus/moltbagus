@@ -1,0 +1,6 @@
+FROM python:3.12-slim
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+WORKDIR /app
+COPY devfun_tcg_bot/ /app/devfun_tcg_bot/
+RUN python -m compileall -q /app/devfun_tcg_bot
+CMD ["python", "-m", "devfun_tcg_bot.benchmark_selfplay"]

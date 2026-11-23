@@ -1,0 +1,24 @@
+services:
+  devfun-tcg-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: devfun-tcg-agent
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - DEVFUN_DB_PATH=/data/tcg_telemetry.sqlite
+    volumes:
+      - tcg_telemetry_data:/data
+      - ./deck.json:/app/deck.json:ro
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "25m"
+        max-file: "5"
+    stop_grace_period: 15s
+
+volumes:
+  tcg_telemetry_data:
+    driver: local
