@@ -27,11 +27,30 @@ from __future__ import annotations
 import time
 import math
 import random
-from typing import Dict, List, Optional, Tuple, Set
+from typing import Any, Dict, List, Optional, Tuple, Set
 from dataclasses import dataclass, field
 
 from belief import BeliefTracker
-from scoring import action_score
+from scoring import (
+    OPTION_ATTACH,
+    OPTION_ATTACK,
+    OPTION_END_TURN,
+    OPTION_PLAY,
+    OPTION_RETREAT,
+    action_score,
+    our_active,
+    parse_action_indices,
+    players_of,
+    select_of,
+    your_index,
+)
+
+
+# Cards whose presence in the opponent's hand changes our move choice.
+GUST_CARD_IDS = {1182}
+ENERGY_DENIAL_CARD_IDS = {1120}
+HAND_DISRUPTION_CARD_IDS = {1213}
+THREAT_CARD_IDS = GUST_CARD_IDS | ENERGY_DENIAL_CARD_IDS | HAND_DISRUPTION_CARD_IDS
 
 
 @dataclass
@@ -67,41 +86,120 @@ class ISMCTSSearch:
 
     def __init__(
         self,
-        belief: BeliefTracker,
+        belief: Any,
         time_budget_ms: int = 1500,
         max_iterations: int = 200,
         exploration: float = 1.414,
+        rng_seed: Optional[int] = None,
     ):
         self.belief = belief
         self.time_budget_ms = time_budget_ms
         self.max_iterations = max_iterations
         self.exploration = exploration
+        self.rng = random.Random(rng_seed)
+
+    def _sample_threats(self) -> Set[int]:
+        """Sample hidden threat cards from the belief hand probabilities."""
+        try:
+            probs = self.belief.hand_probabilities() or {}
+        except Exception:
+            return set()
+        sampled: Set[int] = set()
+        for card_id in THREAT_CARD_IDS:
+            probability = probs.get(card_id, 0.0)
+            if probability > 0 and self.rng.random() < probability:
+                sampled.add(card_id)
+        return sampled
+
+    def _option_type(self, action: str, obs: dict) -> Optional[int]:
+        indices = parse_action_indices(action)
+        if len(indices) != 1:
+            return None
+        options = select_of(obs).get("option") or []
+        index = indices[0]
+        if not 0 <= index < len(options):
+            return None
+        option = options[index]
+        return option.get("type") if isinstance(option, dict) else None
+
+    def _belief_adjustment(self, action: str, obs: dict, threats: Set[int]) -> float:
+        """Adjust a heuristic score by the sampled hidden-hand threats."""
+        if not threats:
+            return 0.0
+        option_type = self._option_type(action, obs)
+        adjustment = 0.0
+        active = our_active(obs)
+        fragile = False
+        if isinstance(active, dict):
+            try:
+                fragile = float(active.get("hp", 0)) / max(1.0, float(active.get("maxHp", 1))) <= 0.5
+            except (TypeError, ValueError):
+                fragile = False
+        if GUST_CARD_IDS & threats and fragile:
+            if option_type == OPTION_RETREAT:
+                adjustment += 120.0
+            elif option_type in (OPTION_ATTACK, OPTION_END_TURN):
+                adjustment -= 120.0
+        if ENERGY_DENIAL_CARD_IDS & threats and option_type == OPTION_ATTACH:
+            adjustment -= 30.0
+        if HAND_DISRUPTION_CARD_IDS & threats and option_type == OPTION_PLAY:
+            players = players_of(obs)
+            index = your_index(obs)
+            if 0 <= index < len(players):
+                try:
+                    hand = int((players[index] or {}).get("handCount", 0))
+                    if hand <= 3:
+                        adjustment += 20.0
+                except (TypeError, ValueError):
+                    pass
+        return adjustment
 
     def search(self, obs: dict, legal_actions: List[str]) -> str:
-        """Return the best legal action given obs and belief state."""
+        """Return the best legal action using belief-weighted ISMCTS."""
         if not legal_actions:
             return None
         if len(legal_actions) == 1:
             return legal_actions[0]
 
-        # Score each action using belief-weighted heuristic
-        scored = []
+        deadline = time.monotonic() + max(0, self.time_budget_ms) / 1000.0
+        root = Node(action="root")
         for action in legal_actions:
-            score = self._score_action(action, obs, legal_actions)
-            scored.append((action, score))
+            child = Node(action=action, parent=root, untried_actions=[action])
+            root.children.append(child)
 
-        # Sort by score descending, tie-break by original order
-        scored.sort(key=lambda x: -x[1])
-        return scored[0][0]
+        iterations = 0
+        while root.children and iterations < self.max_iterations and time.monotonic() < deadline:
+            untried = [child for child in root.children if child.visits == 0]
+            node = self.rng.choice(untried) if untried else max(
+                root.children, key=lambda child: child.ucb1(self.exploration)
+            )
+            threats = self._sample_threats()
+            value = self._score_action(node.action, obs, legal_actions, threats)
+            node.visits += 1
+            node.value += value
+            iterations += 1
 
-    def _score_action(self, action: str, obs: dict, legal_actions: List[str]) -> float:
-        """Score a legal action with card/board semantics.
+        visited = [child for child in root.children if child.visits > 0]
+        if not visited:
+            return legal_actions[0]
+        best = max(
+            visited,
+            key=lambda child: (child.value / child.visits, child.visits, child.action),
+        )
+        return best.action if best.action in legal_actions else legal_actions[0]
 
-        Delegates to ``scoring.action_score``: the arena obs has no ``damage``
-        field, attacks carry ``attackId``, and multi-card selections use
-        ``[i,j]`` actions.  Belief is consulted only for defensive retreat value.
-        """
-        return action_score(action, obs, self.belief)
+    def _score_action(
+        self,
+        action: str,
+        obs: dict,
+        legal_actions: List[str],
+        threats: Optional[Set[int]] = None,
+    ) -> float:
+        """Score a legal action with card semantics and sampled hand threats."""
+        base = action_score(action, obs, self.belief)
+        if threats:
+            base += self._belief_adjustment(action, obs, threats)
+        return base
 
     def update_belief_from_obs(self, obs: dict, prev_obs: Optional[dict] = None):
         """Sync belief to the latest arena observation.
