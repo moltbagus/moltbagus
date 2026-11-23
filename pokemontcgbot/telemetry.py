@@ -25,7 +25,8 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from arena_config import POLICY_VERSION, TELEMETRY_PATH
+import arena_config
+from arena_config import TELEMETRY_PATH
 from scoring import action_score, parse_action_indices, players_of, select_of
 
 # Rotate once at this size; a rotated file stays replayable on its own.
@@ -188,11 +189,12 @@ def build_record(
     pending_entry: Any,
     chosen: Any,
     latency_ms: float,
-    policy_version: str = POLICY_VERSION,
+    policy_version: Optional[str] = None,
     now_ms: Optional[float] = None,
     policy_path: str = "unknown",
 ) -> Optional[Dict[str, Any]]:
     """Build one telemetry record. Returns ``None`` on an unusable entry."""
+    version = policy_version or arena_config.POLICY_VERSION
     if not isinstance(pending_entry, dict):
         return None
     obs = pending_entry.get("obs") or {}
@@ -241,7 +243,7 @@ def build_record(
         "legalActions": legal,
         "obs": _prune_obs(obs),
         "state": _state_snapshot(obs),
-        "policyVersion": policy_version,
+        "policyVersion": version,
         "policyPath": _policy_path(policy_path),
     }
 
@@ -273,7 +275,7 @@ def record(
     chosen: Any,
     latency_ms: float,
     path: Optional[Path] = None,
-    policy_version: str = POLICY_VERSION,
+    policy_version: Optional[str] = None,
     policy_path: str = "unknown",
 ) -> bool:
     """Append one decision record. Never raises; returns False on failure."""
@@ -282,7 +284,7 @@ def record(
             pending_entry,
             chosen,
             latency_ms,
-            policy_version,
+            policy_version or arena_config.POLICY_VERSION,
             policy_path=policy_path,
         )
         if entry is None:

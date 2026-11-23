@@ -42,7 +42,8 @@ def test_deck_shape_and_copy_limits():
 
 def test_policy_version_is_declared_once():
     assert arena_config.POLICY_VERSION
-    assert telemetry.POLICY_VERSION == arena_config.POLICY_VERSION
+    assert not re.search(r"^POLICY_VERSION\s*=", inspect.getsource(telemetry), re.M)
+    assert "arena_config.POLICY_VERSION" in inspect.getsource(telemetry)
 
 
 def test_no_module_redeclares_the_deck():

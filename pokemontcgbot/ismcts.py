@@ -1,7 +1,8 @@
-"""ISMCTS (Information Set MCTS) for Pokemon TCG.
+"""Information-set search for Pokemon TCG.
 
-Information-set Monte Carlo Tree Search for Pokemon TCG. Uses belief state
-to sample opponent hands/deck, then runs MCTS with chance nodes for draws.
+The implementation samples hidden threat cards from the belief hand
+probabilities, then runs bounded UCB1 over legal action nodes with a heuristic
+score. It does not simulate draws or full game trees; no rollout is claimed.
 
 Since we don't have a full game simulator, this module provides:
 1. A lightweight belief-weighted heuristic that uses the BeliefTracker
@@ -154,7 +155,7 @@ class ISMCTSSearch:
                     pass
         return adjustment
 
-    def search(self, obs: dict, legal_actions: List[str]) -> str:
+    def search(self, obs: dict, legal_actions: List[str]) -> Optional[str]:
         """Return the best legal action using belief-weighted ISMCTS."""
         if not legal_actions:
             return None

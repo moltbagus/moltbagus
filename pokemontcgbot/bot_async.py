@@ -35,7 +35,7 @@ except ImportError:
     HAS_RUFLO = False
 
 # Shared action selection + Ruflo result mapping (single implementation).
-from arena_config import BASIC_POKEMON_IDS, COMPETITION_ID, DECK, SEASON_NUMBER
+from arena_config import BASIC_POKEMON_IDS, COMPETITION_ID, DECK, DECK_THESIS, SEASON_NUMBER
 from bot import (
     _write_state,
     acquire_single_instance_lock,
@@ -330,7 +330,7 @@ async def main():
     creds = load_creds()
     api_key = creds["apiKey"]
     print(f"agent={creds['handle']} agentId={creds['agentId']}")
-    print(f"deck: {len(DECK)} cards (high-HP 0-energy attackers)")
+    print(f"deck: {len(DECK)} cards ({DECK_THESIS})")
 
     # Initialize belief tracker
     if HAS_BELIEF:

@@ -36,7 +36,7 @@ BASIC_POKEMON_IDS = frozenset({741, 305, 140, 1006, 554, 625, 328, 299, 39, 390}
 
 # Bumped whenever a decision-affecting policy change ships; every telemetry
 # record carries it so an offline replay can attribute a choice to a policy.
-POLICY_VERSION = "l0-2026-11-20"
+POLICY_VERSION = "l0-2026-11-23-belief-ismcts"
 
 # Identity of the 60-card list, recorded on every match so Ruflo's history can
 # be split by deck. Bump it when the deck changes — never per-decision.

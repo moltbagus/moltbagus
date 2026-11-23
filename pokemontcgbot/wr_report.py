@@ -46,6 +46,25 @@ def _git_commit() -> str:
 
 
 def _service_binding() -> tuple[str, str]:
+    """Return pm2 pid/start first, then systemd as a fallback."""
+    try:
+        out = subprocess.check_output(
+        ["pm2", "jlist"],
+            stderr=subprocess.DEVNULL,
+            text=True,
+        )
+        apps = json.loads(out)
+        for app in apps if isinstance(apps, list) else []:
+            if app.get("name") != "tcg-bot":
+                continue
+            pid = str(app.get("pid") or "unknown")
+            env = app.get("pm2_env") or {}
+            created = env.get("created_at")
+            start = iso_shanghai(created) if isinstance(created, (int, float)) else "unknown"
+            if pid != "unknown" and start:
+                return pid, start
+    except (OSError, subprocess.SubprocessError, ValueError, TypeError):
+        pass
     try:
         out = subprocess.check_output(
             [
