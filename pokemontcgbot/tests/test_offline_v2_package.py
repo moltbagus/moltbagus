@@ -77,3 +77,22 @@ def test_expectimax_search_returns_legal_action_and_respects_budget():
     ]
     chosen = run_expectimax_search(state, actions, {"expected_active_damage": 110}, budget_ms=50, temperature=0.0)
     assert chosen["id"] in {"end", "bench", "attach"}
+
+
+def test_benchmark_is_reproducible_for_fixed_seed():
+    """The v2 harness must not let unseeded softmax sampling change the verdict."""
+    from devfun_tcg_bot.benchmark_selfplay import (
+        AgentPolicy, LocalTCGSimulator, _build_sample_60_card_deck,
+        greedy_baseline_selector, run_red_blue_benchmark,
+    )
+
+    deck = _build_sample_60_card_deck()
+    champ = AgentPolicy(name="champ", deck_list=deck, custom_selector=greedy_baseline_selector)
+    cand = AgentPolicy(name="cand", deck_list=deck, budget_ms=20)
+
+    def verdict():
+        r = run_red_blue_benchmark(champ, cand, total_games=20, base_seed=42)
+        return (r["challenger_wins"], r["win_rate"], r["PROMOTE_TO_PROD"])
+
+    assert verdict() == verdict() == verdict()
+

@@ -172,6 +172,9 @@ class LocalTCGSimulator:
         }
 
     def play_game(self, red: AgentPolicy, blue: AgentPolicy, seed: int) -> MatchOutcome:
+        # The policy's softmax tie-break draws from the module-level RNG. Seed it
+        # per match so paired (seed, seat-swap) games are reproducible run to run.
+        random.seed(seed)
         rng = random.Random(seed)
         sides = {"RED": self._init_side(red.deck_list, rng), "BLUE": self._init_side(blue.deck_list, rng)}
         policies = {"RED": red, "BLUE": blue}

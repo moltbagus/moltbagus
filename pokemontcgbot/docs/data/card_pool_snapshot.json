@@ -1,0 +1,2457 @@
+{
+  "meta": {
+    "competitionId": "cmwm3cekx011nln01c3gqi0tc",
+    "season": 7,
+    "fetchedAt": "2026-11-21T00:10:21+00:00",
+    "endpoints": [
+      "https://arena.dev.fun/api/arena/tcg/cards?competitionId=cmwm3cekx011nln01c3gqi0tc",
+      "https://arena.dev.fun/api/arena/tcg/attacks?competitionId=cmwm3cekx011nln01c3gqi0tc"
+    ],
+    "pool_size": {
+      "cards": 1267,
+      "attacks": 1556
+    },
+    "kept": {
+      "cards": 83,
+      "attacks": 12
+    },
+    "bound": {
+      "description": "candidate deck + live S7 deck + every card the M3 plan argues about (rejected draw, rejected acceleration, rejected ACE SPEC, rejected stadiums, cards cut from the live list) + all basic and special energy",
+      "groups": {
+        "candidate": [
+          5,
+          140,
+          245,
+          305,
+          306,
+          741,
+          742,
+          1006,
+          1086,
+          1097,
+          1129,
+          1146,
+          1152,
+          1182,
+          1213,
+          1224,
+          1227,
+          1231,
+          1266
+        ],
+        "live_s7_deck": [
+          5,
+          140,
+          245,
+          305,
+          306,
+          554,
+          741,
+          742,
+          1006,
+          1081,
+          1086,
+          1097,
+          1129,
+          1152,
+          1182,
+          1197,
+          1198,
+          1231,
+          1266
+        ],
+        "all_basic_energy": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "all_special_energy": [
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20
+        ],
+        "rejected_draw_supporters": [
+          1181,
+          1187,
+          1192,
+          1199,
+          1200,
+          1203,
+          1207,
+          1208,
+          1214,
+          1216,
+          1217,
+          1223,
+          1226,
+          1236,
+          1237,
+          1239
+        ],
+        "rejected_acceleration": [
+          1089,
+          1098,
+          1113,
+          1135,
+          1147,
+          1163,
+          1235,
+          1240
+        ],
+        "rejected_ace_spec": [
+          10,
+          12,
+          1088,
+          1092,
+          1093,
+          1096,
+          1100,
+          1109,
+          1110,
+          1125,
+          1126,
+          1128,
+          1155,
+          1158,
+          1159
+        ],
+        "rejected_stadiums": [
+          1245,
+          1246,
+          1264,
+          1267
+        ],
+        "cut_from_live": [
+          554,
+          1081,
+          1197,
+          1198
+        ]
+      }
+    }
+  },
+  "cards": [
+    {
+      "cardId": 1,
+      "name": "Basic {G} Energy",
+      "cardType": 5,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 1,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": []
+    },
+    {
+      "cardId": 2,
+      "name": "Basic {R} Energy",
+      "cardType": 5,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 2,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": []
+    },
+    {
+      "cardId": 3,
+      "name": "Basic {W} Energy",
+      "cardType": 5,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 3,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": []
+    },
+    {
+      "cardId": 4,
+      "name": "Basic {L} Energy",
+      "cardType": 5,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 4,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": []
+    },
+    {
+      "cardId": 5,
+      "name": "Basic {P} Energy",
+      "cardType": 5,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 5,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": []
+    },
+    {
+      "cardId": 6,
+      "name": "Basic {F} Energy",
+      "cardType": 5,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 6,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": []
+    },
+    {
+      "cardId": 7,
+      "name": "Basic {D} Energy",
+      "cardType": 5,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 7,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": []
+    },
+    {
+      "cardId": 8,
+      "name": "Basic {M} Energy",
+      "cardType": 5,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 8,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": []
+    },
+    {
+      "cardId": 9,
+      "name": "Boomerang Energy",
+      "cardType": 6,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Boomerang Energy",
+          "text": "As long as this card is attached to a Pokémon, it provides {C} Energy.\n\nIf this card is discarded by an effect of an attack used by the Pokémon this card is attached to, attach this card from your discard pile to that Pokémon after attacking."
+        }
+      ]
+    },
+    {
+      "cardId": 10,
+      "name": "Neo Upper Energy",
+      "cardType": 6,
+      "basic": false,
+      "aceSpec": true,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Neo Upper Energy",
+          "text": "As long as this card is attached to a Pokémon, it provides {C} Energy.\n\nIf this card is attached to a Stage 2 Pokémon, this card provides every type of Energy but provides only 2 Energy at a time."
+        }
+      ]
+    },
+    {
+      "cardId": 11,
+      "name": "Mist Energy",
+      "cardType": 6,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Mist Energy",
+          "text": "As long as this card is attached to a Pokémon, it provides {C} Energy.\n\nPrevent all effects of attacks used by your opponent’s Pokémon done to the Pokémon this card is attached to. (Existing effects are not removed. Damage is not an effect.)"
+        }
+      ]
+    },
+    {
+      "cardId": 12,
+      "name": "Legacy Energy",
+      "cardType": 6,
+      "basic": false,
+      "aceSpec": true,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 10,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Legacy Energy",
+          "text": "As long as this card is attached to a Pokémon, it provides every type of Energy but provides only 1 Energy at a time.\n\nIf the Pokémon this card is attached to is Knocked Out by damage from an attack from your opponent’s Pokémon, that player takes 1 fewer Prize card. This effect of your Legacy Energy only works once per game."
+        }
+      ]
+    },
+    {
+      "cardId": 13,
+      "name": "Enriching Energy",
+      "cardType": 6,
+      "basic": false,
+      "aceSpec": true,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Enriching Energy",
+          "text": "As long as this card is attached to a Pokémon, it provides {C} Energy.\n\nWhen you attach this card from your hand to a Pokémon, draw 4 cards."
+        }
+      ]
+    },
+    {
+      "cardId": 14,
+      "name": "Spiky Energy",
+      "cardType": 6,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Spiky Energy",
+          "text": "As long as this card is attached to a Pokémon, it provides {C} Energy.\n\nIf the Pokémon this card is attached to is in the Active Spot and is damaged by an attack from your opponent’s Pokémon (even if this Pokémon is Knocked Out), put 2 damage counters on the Attacking Pokémon."
+        }
+      ]
+    },
+    {
+      "cardId": 15,
+      "name": "Team Rocket's Energy",
+      "cardType": 6,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Team Rocket's Energy",
+          "text": "This card can only be attached to a Team Rocket’s Pokémon. If this card is attached to anything other than a Team Rocket’s Pokémon, discard this card.\n\nAs long as this card is attached to a Pokémon, it provides 2 in any combination of {P} Energy and {D} Energy."
+        }
+      ]
+    },
+    {
+      "cardId": 16,
+      "name": "Prism Energy",
+      "cardType": 6,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Prism Energy",
+          "text": "As long as this card is attached to a Pokémon, it provides {C} Energy.\n\nIf this card is attached to a Basic Pokémon, this card provides every type of Energy but provides only 1 Energy at a time."
+        }
+      ]
+    },
+    {
+      "cardId": 17,
+      "name": "Ignition Energy",
+      "cardType": 6,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Ignition Energy",
+          "text": "If this card is attached to 1 of your Pokémon, discard it at the end of your turn.\n\nAs long as this card is attached to a Pokémon, it provides {C} Energy.\n\nIf this card is attached to an Evolution Pokémon, it provides {C}{C}{C} Energy instead."
+        }
+      ]
+    },
+    {
+      "cardId": 18,
+      "name": "Grow Grass Energy",
+      "cardType": 6,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 1,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Grow Grass Energy",
+          "text": "As long as this card is attached to a Pokémon, it provides {G} Energy.\nThe {G} Pokémon this card is attached to gets +20 HP."
+        }
+      ]
+    },
+    {
+      "cardId": 19,
+      "name": "Telepath Psychic Energy",
+      "cardType": 6,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 5,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Telepath Psychic Energy",
+          "text": "As long as this card is attached to a Pokémon, it provides {P} Energy.\nWhen you attach this card from your hand to a {P} Pokémon, search your deck for up to 2 Basic {P} Pokémon and put them onto your Bench. Then, shuffle your deck."
+        }
+      ]
+    },
+    {
+      "cardId": 20,
+      "name": "Rock Fighting Energy",
+      "cardType": 6,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 6,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Rock Fighting Energy",
+          "text": "As long as this card is attached to a Pokémon, it provides {F} Energy.\nPrevent all effects of attacks used by your opponent’s Pokémon done to the {F} Pokémon this card is attached to. (Existing effects are not removed. Damage is not an effect.)"
+        }
+      ]
+    },
+    {
+      "cardId": 140,
+      "name": "Fezandipiti ex",
+      "cardType": 0,
+      "basic": true,
+      "aceSpec": false,
+      "attacks": [
+        183
+      ],
+      "pokemonType": 3,
+      "evolutionType": 1,
+      "retreatCost": 1,
+      "hp": 210,
+      "weakness": 6,
+      "resistance": null,
+      "energyType": 7,
+      "stage1": false,
+      "stage2": false,
+      "ex": true,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Flip the Script",
+          "text": "Once during your turn, if any of your Pokémon were Knocked Out during your opponent’s last turn, you may draw 3 cards. You can’t use more than 1 Flip the Script Ability each turn."
+        }
+      ]
+    },
+    {
+      "cardId": 245,
+      "name": "Alakazam",
+      "cardType": 0,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [
+        338,
+        339
+      ],
+      "pokemonType": 1,
+      "evolutionType": 3,
+      "retreatCost": 1,
+      "hp": 140,
+      "weakness": 7,
+      "resistance": 6,
+      "energyType": 5,
+      "stage1": false,
+      "stage2": true,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": "Kadabra",
+      "skills": []
+    },
+    {
+      "cardId": 305,
+      "name": "Dunsparce",
+      "cardType": 0,
+      "basic": true,
+      "aceSpec": false,
+      "attacks": [
+        423,
+        424
+      ],
+      "pokemonType": 1,
+      "evolutionType": 1,
+      "retreatCost": 1,
+      "hp": 70,
+      "weakness": 6,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": []
+    },
+    {
+      "cardId": 306,
+      "name": "Dudunsparce ex",
+      "cardType": 0,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [
+        425,
+        426
+      ],
+      "pokemonType": 3,
+      "evolutionType": 2,
+      "retreatCost": 3,
+      "hp": 270,
+      "weakness": 6,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": true,
+      "stage2": false,
+      "ex": true,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": "Dunsparce",
+      "skills": []
+    },
+    {
+      "cardId": 554,
+      "name": "Audino",
+      "cardType": 0,
+      "basic": true,
+      "aceSpec": false,
+      "attacks": [
+        791
+      ],
+      "pokemonType": 1,
+      "evolutionType": 1,
+      "retreatCost": 1,
+      "hp": 100,
+      "weakness": 6,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": []
+    },
+    {
+      "cardId": 741,
+      "name": "Abra",
+      "cardType": 0,
+      "basic": true,
+      "aceSpec": false,
+      "attacks": [
+        1070
+      ],
+      "pokemonType": 1,
+      "evolutionType": 1,
+      "retreatCost": 1,
+      "hp": 50,
+      "weakness": 7,
+      "resistance": 6,
+      "energyType": 5,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": []
+    },
+    {
+      "cardId": 742,
+      "name": "Kadabra",
+      "cardType": 0,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [
+        1071
+      ],
+      "pokemonType": 1,
+      "evolutionType": 2,
+      "retreatCost": 1,
+      "hp": 80,
+      "weakness": 7,
+      "resistance": 6,
+      "energyType": 5,
+      "stage1": true,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": "Abra",
+      "skills": [
+        {
+          "name": " Psychic Draw",
+          "text": "Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Draw 2 cards."
+        }
+      ]
+    },
+    {
+      "cardId": 1006,
+      "name": "Mega Audino ex",
+      "cardType": 0,
+      "basic": true,
+      "aceSpec": false,
+      "attacks": [
+        1453,
+        1454
+      ],
+      "pokemonType": 4,
+      "evolutionType": 1,
+      "retreatCost": 1,
+      "hp": 270,
+      "weakness": 6,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": true,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": []
+    },
+    {
+      "cardId": 1081,
+      "name": "Enhanced Hammer",
+      "cardType": 1,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Enhanced Hammer",
+          "text": "Discard a Special Energy from 1 of your opponent’s Pokémon."
+        }
+      ]
+    },
+    {
+      "cardId": 1086,
+      "name": "Buddy-Buddy Poffin",
+      "cardType": 1,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Buddy-Buddy Poffin",
+          "text": "Search your deck for up to 2 Basic Pokémon with 70 HP or less and put them onto your Bench. Then, shuffle your deck."
+        }
+      ]
+    },
+    {
+      "cardId": 1088,
+      "name": "Prime Catcher",
+      "cardType": 1,
+      "basic": false,
+      "aceSpec": true,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Prime Catcher",
+          "text": "Switch in 1 of your opponent’s Benched Pokémon to the Active Spot. If you do, switch your Active Pokémon with 1 of your Benched Pokémon."
+        }
+      ]
+    },
+    {
+      "cardId": 1089,
+      "name": "Reboot Pod",
+      "cardType": 1,
+      "basic": false,
+      "aceSpec": true,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Reboot Pod",
+          "text": "Attach a Basic Energy card from your discard pile to each of your Future Pokémon."
+        }
+      ]
+    },
+    {
+      "cardId": 1092,
+      "name": "Secret Box",
+      "cardType": 1,
+      "basic": false,
+      "aceSpec": true,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Secret Box",
+          "text": "You can use this card only if you discard 3 other cards from your hand.\n\nSearch your deck for an Item card, a Pokémon Tool card, a Supporter card, and a Stadium card, reveal them, and put them into your hand. Then, shuffle your deck."
+        }
+      ]
+    },
+    {
+      "cardId": 1093,
+      "name": "Scoop Up Cyclone",
+      "cardType": 1,
+      "basic": false,
+      "aceSpec": true,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Scoop Up Cyclone",
+          "text": "Put 1 of your Pokémon and all attached cards into your hand."
+        }
+      ]
+    },
+    {
+      "cardId": 1096,
+      "name": "Poké Vital A",
+      "cardType": 1,
+      "basic": false,
+      "aceSpec": true,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Poké Vital A",
+          "text": "Heal 150 damage from 1 of your Pokémon.\n\nThis card can’t be put into your hand or deck from the discard pile."
+        }
+      ]
+    },
+    {
+      "cardId": 1097,
+      "name": "Night Stretcher",
+      "cardType": 1,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Night Stretcher",
+          "text": "Put a Pokémon or a Basic Energy card from your discard pile into your hand."
+        }
+      ]
+    },
+    {
+      "cardId": 1098,
+      "name": "Glass Trumpet",
+      "cardType": 1,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Glass Trumpet",
+          "text": "You can use this card only if you have any Tera Pokémon in play.\n\nChoose up to 2 of your Benched {C} Pokémon and attach a Basic Energy card from your discard pile to each of them."
+        }
+      ]
+    },
+    {
+      "cardId": 1100,
+      "name": "Energy Search Pro",
+      "cardType": 1,
+      "basic": false,
+      "aceSpec": true,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Energy Search Pro",
+          "text": "Search your deck for any number of Basic Energy cards of different types, reveal them, and put them into your hand. Then, shuffle your deck."
+        }
+      ]
+    },
+    {
+      "cardId": 1109,
+      "name": "Miracle Headset",
+      "cardType": 1,
+      "basic": false,
+      "aceSpec": true,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Miracle Headset",
+          "text": "Put up to 2 Supporter cards from your discard pile into your hand."
+        }
+      ]
+    },
+    {
+      "cardId": 1110,
+      "name": "Max Rod",
+      "cardType": 1,
+      "basic": false,
+      "aceSpec": true,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Max Rod",
+          "text": "Put up to 5 in any combination of Pokémon and Basic Energy cards from your discard pile into your hand."
+        }
+      ]
+    },
+    {
+      "cardId": 1113,
+      "name": "N’s PP Up",
+      "cardType": 1,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "N’s PP Up",
+          "text": "Attach a Basic Energy card from your discard pile to 1 of your Benched N’s Pokémon."
+        }
+      ]
+    },
+    {
+      "cardId": 1125,
+      "name": "Master Ball",
+      "cardType": 1,
+      "basic": false,
+      "aceSpec": true,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Master Ball",
+          "text": "Search your deck for a Pokémon, reveal it, and put it into your hand. Then, shuffle your deck."
+        }
+      ]
+    },
+    {
+      "cardId": 1126,
+      "name": "Precious Trolley",
+      "cardType": 1,
+      "basic": false,
+      "aceSpec": true,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Precious Trolley",
+          "text": "Search your deck for any number of Basic Pokémon and put them onto your Bench. Then, shuffle your deck."
+        }
+      ]
+    },
+    {
+      "cardId": 1128,
+      "name": "Brilliant Blender",
+      "cardType": 1,
+      "basic": false,
+      "aceSpec": true,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Brilliant Blender",
+          "text": "Search your deck for up to 5 cards and discard them. Then, shuffle your deck."
+        }
+      ]
+    },
+    {
+      "cardId": 1129,
+      "name": "Sacred Ash",
+      "cardType": 1,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Sacred Ash",
+          "text": "Shuffle up to 5 Pokémon from your discard pile into your deck."
+        }
+      ]
+    },
+    {
+      "cardId": 1135,
+      "name": "Energy Coin",
+      "cardType": 1,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Energy Coin",
+          "text": "Flip 2 coins. If both of them are heads, search your deck for a Basic Energy card and attach it to 1 of your Pokémon. Then, shuffle your deck."
+        }
+      ]
+    },
+    {
+      "cardId": 1146,
+      "name": "Wondrous Patch",
+      "cardType": 1,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Wondrous Patch",
+          "text": "Attach a Basic {P} Energy card from your discard pile to 1 of your Benched {P} Pokémon."
+        }
+      ]
+    },
+    {
+      "cardId": 1147,
+      "name": "Jumbo Ice Cream",
+      "cardType": 1,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Jumbo Ice Cream",
+          "text": "Heal 80 damage from your Active Pokémon that has 3 or more Energy attached."
+        }
+      ]
+    },
+    {
+      "cardId": 1152,
+      "name": "Poké Pad",
+      "cardType": 1,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Poké Pad",
+          "text": "Search your deck for a Pokémon that doesn’t have a Rule Box, reveal it, and put it into your hand. Then, shuffle your deck. (Pokémon {ex}, Pokémon {V}, etc. have Rule Boxes.)"
+        }
+      ]
+    },
+    {
+      "cardId": 1155,
+      "name": "Survival Brace",
+      "cardType": 2,
+      "basic": false,
+      "aceSpec": true,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Survival Brace",
+          "text": "If the Pokémon this card is attached to has full HP and would be Knocked Out by damage from an attack from your opponent’s Pokémon, it is not Knocked Out, and its remaining HP becomes 10. Then, discard this card."
+        }
+      ]
+    },
+    {
+      "cardId": 1158,
+      "name": "Maximum Belt",
+      "cardType": 2,
+      "basic": false,
+      "aceSpec": true,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Maximum Belt",
+          "text": "Attacks used by the Pokémon this card is attached to do 50 more damage to your opponent’s Active Pokémon {ex} (before applying Weakness and Resistance)."
+        }
+      ]
+    },
+    {
+      "cardId": 1159,
+      "name": "Hero’s Cape",
+      "cardType": 2,
+      "basic": false,
+      "aceSpec": true,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Hero’s Cape",
+          "text": "The Pokémon this card is attached to gets +100 HP."
+        }
+      ]
+    },
+    {
+      "cardId": 1163,
+      "name": "Powerglass",
+      "cardType": 2,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Powerglass",
+          "text": "At the end of your turn (after your attack), if the Pokémon this card is attached to is in the Active Spot, you may attach a Basic Energy card from your discard pile to it."
+        }
+      ]
+    },
+    {
+      "cardId": 1181,
+      "name": "Billy & O'Nare",
+      "cardType": 3,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Billy & O'Nare",
+          "text": "Draw 2 cards. Then, if you have 10 or more cards in your hand, draw 2 more cards."
+        }
+      ]
+    },
+    {
+      "cardId": 1182,
+      "name": "Boss’s Orders",
+      "cardType": 3,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Boss’s Orders",
+          "text": "Switch in 1 of your opponent’s Benched Pokémon to the Active Spot."
+        }
+      ]
+    },
+    {
+      "cardId": 1187,
+      "name": "Morty’s Conviction",
+      "cardType": 3,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Morty’s Conviction",
+          "text": "You can use this card only if you discard another card from your hand.\n\nDraw a card for each of your opponent’s Benched Pokémon."
+        }
+      ]
+    },
+    {
+      "cardId": 1192,
+      "name": "Carmine",
+      "cardType": 3,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Carmine",
+          "text": "If you go first, you may use this card during your first turn.\n\nDiscard your hand and draw 5 cards."
+        }
+      ]
+    },
+    {
+      "cardId": 1197,
+      "name": "Xerosic’s Machinations",
+      "cardType": 3,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Xerosic’s Machinations",
+          "text": "Your opponent discards cards from their hand until they have 3 cards in their hand."
+        }
+      ]
+    },
+    {
+      "cardId": 1198,
+      "name": "Crispin",
+      "cardType": 3,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Crispin",
+          "text": "Search your deck for up to 2 Basic Energy cards of different types, reveal them, and put 1 of them into your hand. Attach the other to 1 of your Pokémon. Then, shuffle your deck."
+        }
+      ]
+    },
+    {
+      "cardId": 1199,
+      "name": "Lacey",
+      "cardType": 3,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Lacey",
+          "text": "Shuffle your hand into your deck. Then, draw 4 cards. If your opponent has 3 or fewer Prize cards remaining, draw 8 cards instead."
+        }
+      ]
+    },
+    {
+      "cardId": 1200,
+      "name": "Kofu",
+      "cardType": 3,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Kofu",
+          "text": "Put 2 cards from your hand on the bottom of your deck in any order. If you put 2 cards on the bottom of your deck in this way, draw 4 cards. (If you can’t put 2 cards from your hand on the bottom of your deck, you can’t use this card.)"
+        }
+      ]
+    },
+    {
+      "cardId": 1203,
+      "name": "Surfer",
+      "cardType": 3,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Surfer",
+          "text": "Switch your Active Pokémon with 1 of your Benched Pokémon. If you do, draw cards until you have 5 cards in your hand."
+        }
+      ]
+    },
+    {
+      "cardId": 1207,
+      "name": "Amarys",
+      "cardType": 3,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Amarys",
+          "text": "Draw 4 cards. At the end of this turn, if you have 5 or more cards in your hand, discard your hand."
+        }
+      ]
+    },
+    {
+      "cardId": 1208,
+      "name": "Iris’s Fighting Spirit",
+      "cardType": 3,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Iris’s Fighting Spirit",
+          "text": "You can use this card only if you discard another card from your hand.\n\nDraw cards until you have 6 cards in your hand."
+        }
+      ]
+    },
+    {
+      "cardId": 1213,
+      "name": "Judge",
+      "cardType": 3,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Judge",
+          "text": "Each player shuffles their hand into their deck and draws 4 cards."
+        }
+      ]
+    },
+    {
+      "cardId": 1214,
+      "name": "Emcee's Hype",
+      "cardType": 3,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Emcee's Hype",
+          "text": "Draw 2 cards. If your opponent has 3 or fewer Prize cards remaining, draw 2 more cards."
+        }
+      ]
+    },
+    {
+      "cardId": 1216,
+      "name": "Team Rocket's Ariana",
+      "cardType": 3,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Team Rocket's Ariana",
+          "text": "Draw cards until you have 5 cards in your hand. If all of your Pokémon in play are Team Rocket’s Pokémon, draw cards until you have 8 cards in your hand instead."
+        }
+      ]
+    },
+    {
+      "cardId": 1217,
+      "name": "Team Rocket's Archer",
+      "cardType": 3,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Team Rocket's Archer",
+          "text": "You can use this card only if any of your Team Rocket’s Pokémon were Knocked Out during your opponent’s last turn.\n\nEach player shuffles their hand into their deck. Then, you draw 5 cards, and your opponent draws 3 cards."
+        }
+      ]
+    },
+    {
+      "cardId": 1223,
+      "name": "Harlequin",
+      "cardType": 3,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Harlequin",
+          "text": "Each player shuffles their hand into their deck. Then, flip a coin. If heads, you draw 5 cards, and your opponent draws 3 cards. If tails, you draw 3 cards, and your opponent draws 5 cards."
+        }
+      ]
+    },
+    {
+      "cardId": 1224,
+      "name": "Cheren",
+      "cardType": 3,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Cheren",
+          "text": "Draw 3 cards."
+        }
+      ]
+    },
+    {
+      "cardId": 1226,
+      "name": "Lt. Surge's Bargain",
+      "cardType": 3,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Lt. Surge's Bargain",
+          "text": "Ask your opponent if each player may take a Prize card. If yes, each player takes a Prize card. If no, you draw 4 cards."
+        }
+      ]
+    },
+    {
+      "cardId": 1227,
+      "name": "Lillie's Determination",
+      "cardType": 3,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Lillie's Determination",
+          "text": "Shuffle your hand into your deck. Then, draw 6 cards. If you have exactly 6 Prize cards remaining, draw 8 cards instead."
+        }
+      ]
+    },
+    {
+      "cardId": 1231,
+      "name": "Dawn",
+      "cardType": 3,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Dawn",
+          "text": "Search your deck for a Basic Pokémon, a Stage 1 Pokémon, and a Stage 2 Pokémon, reveal them, and put them into your hand. Then, shuffle your deck."
+        }
+      ]
+    },
+    {
+      "cardId": 1235,
+      "name": "Waitress",
+      "cardType": 3,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Waitress",
+          "text": "Look at the top 6 cards of your deck and attach a Basic Energy card you find there to 1 of your Pokémon. Shuffle the other cards back into your deck."
+        }
+      ]
+    },
+    {
+      "cardId": 1236,
+      "name": "Urbain",
+      "cardType": 3,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Urbain",
+          "text": "Draw 3 cards."
+        }
+      ]
+    },
+    {
+      "cardId": 1237,
+      "name": "Lucian",
+      "cardType": 3,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Lucian",
+          "text": "Each player shuffles their hand and puts it on the bottom of their deck. If either player put any cards on the bottom of their deck in this way, each player flips a coin. If heads, that player draws 6 cards. If tails, they draw 3 cards."
+        }
+      ]
+    },
+    {
+      "cardId": 1239,
+      "name": "Naveen",
+      "cardType": 3,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Naveen",
+          "text": "Draw cards until you have 5 cards in your hand. Before drawing cards, you may discard any number of cards from your hand. (If you can’t draw any cards in this way, you can’t use this card.)"
+        }
+      ]
+    },
+    {
+      "cardId": 1240,
+      "name": "Rosa's Encouragement",
+      "cardType": 3,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Rosa's Encouragement",
+          "text": "You can use this card only if you have more Prize cards remaining than your opponent.\n\nAttach up to 2 Basic Energy cards from your discard pile to 1 of your Stage 2 Pokémon."
+        }
+      ]
+    },
+    {
+      "cardId": 1245,
+      "name": "Festival Grounds",
+      "cardType": 4,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Festival Grounds",
+          "text": "Each Pokémon that has any Energy attached (both yours and your opponent’s) recovers from all Special Conditions and can’t be affected by any Special Conditions."
+        }
+      ]
+    },
+    {
+      "cardId": 1246,
+      "name": "Jamming Tower",
+      "cardType": 4,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Jamming Tower",
+          "text": "Pokémon Tools attached to each Pokémon (both yours and your opponent’s) have no effect."
+        }
+      ]
+    },
+    {
+      "cardId": 1264,
+      "name": "Battle Cage",
+      "cardType": 4,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Battle Cage",
+          "text": "Prevent all damage counters from being placed on Benched Pokémon (both yours and your opponent’s) by effects of attacks and Abilities from the opponent’s Pokémon. (Damage from attacks is still taken.)"
+        }
+      ]
+    },
+    {
+      "cardId": 1266,
+      "name": "Nighttime Mine",
+      "cardType": 4,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Nighttime Mine",
+          "text": "Attacks used by each Tera Pokémon in play (both yours and your opponent’s) cost {C} more."
+        }
+      ]
+    },
+    {
+      "cardId": 1267,
+      "name": "Lumiose City",
+      "cardType": 4,
+      "basic": false,
+      "aceSpec": false,
+      "attacks": [],
+      "pokemonType": 0,
+      "evolutionType": 0,
+      "retreatCost": 0,
+      "hp": 0,
+      "weakness": null,
+      "resistance": null,
+      "energyType": 0,
+      "stage1": false,
+      "stage2": false,
+      "ex": false,
+      "megaEx": false,
+      "tera": false,
+      "evolvesFrom": null,
+      "skills": [
+        {
+          "name": "Lumiose City",
+          "text": "Once during each player’s turn, that player may search their deck for a Basic Pokémon and put it onto their Bench. Then, that player shuffles their deck. If a player searches their deck in this way, their turn ends."
+        }
+      ]
+    }
+  ],
+  "attacks": [
+    {
+      "attackId": 183,
+      "name": "Cruel Arrow",
+      "text": "This attack does 100 damage to 1 of your opponent’s Pokémon. (Don’t apply Weakness and Resistance for Benched Pokémon.)",
+      "damage": 0,
+      "energies": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "attackId": 338,
+      "name": "Strange Hacking",
+      "text": "Your opponent’s Active Pokémon is now Confused. You may move any number of damage counters on your opponent’s Pokémon to their other Pokémon in any way you like.",
+      "damage": 0,
+      "energies": [
+        5
+      ]
+    },
+    {
+      "attackId": 339,
+      "name": "Psychic",
+      "text": "This attack does 50 more damage for each Energy attached to your opponent’s Active Pokémon.",
+      "damage": 10,
+      "energies": [
+        5
+      ]
+    },
+    {
+      "attackId": 423,
+      "name": "Trading Places",
+      "text": "Switch this Pokémon with 1 of your Benched Pokémon.",
+      "damage": 0,
+      "energies": [
+        0
+      ]
+    },
+    {
+      "attackId": 424,
+      "name": "Ram",
+      "text": "",
+      "damage": 20,
+      "energies": [
+        0,
+        0
+      ]
+    },
+    {
+      "attackId": 425,
+      "name": "Tenacious Tail",
+      "text": "This attack does 60 damage for each of your opponent’s Pokémon {ex} in play.",
+      "damage": 0,
+      "energies": [
+        0
+      ]
+    },
+    {
+      "attackId": 426,
+      "name": "Destructive Drill",
+      "text": "This attack’s damage isn’t affected by any effects on your opponent’s Active Pokémon.",
+      "damage": 150,
+      "energies": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "attackId": 791,
+      "name": "Return",
+      "text": "You may draw cards until you have 6 cards in your hand.",
+      "damage": 30,
+      "energies": [
+        0
+      ]
+    },
+    {
+      "attackId": 1070,
+      "name": "Teleportation Attack",
+      "text": "Switch this Pokémon with 1 of your Benched Pokémon.",
+      "damage": 10,
+      "energies": [
+        5
+      ]
+    },
+    {
+      "attackId": 1071,
+      "name": "Super Psy Bolt",
+      "text": "",
+      "damage": 30,
+      "energies": [
+        5
+      ]
+    },
+    {
+      "attackId": 1453,
+      "name": "Kaleidowaltz",
+      "text": "Flip 3 coins. For each heads, search your deck for up to 2 Basic Energy cards and attach them to your Pokémon in any way you like. Then, shuffle your deck.",
+      "damage": 0,
+      "energies": [
+        0
+      ]
+    },
+    {
+      "attackId": 1454,
+      "name": "Ear Force",
+      "text": "This attack does 80 more damage for each Energy attached to your opponent’s Active Pokémon.",
+      "damage": 20,
+      "energies": [
+        0,
+        0,
+        0
+      ]
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "name": "m3-audino-v3-candidate",
+  "status": "candidate — not deployed; the S7 deck in arena_config.DECK is locked",
+  "competition_id": "cmwm3cekx011nln01c3gqi0tc",
+  "season": 7,
+  "basis": "s7-audino-v1 (arena_config.DECK, 2026-11-20)",
+  "composition": {
+    "pokemon": 18,
+    "trainers": 30,
+    "energy": 12,
+    "total": 60,
+    "ace_spec": 0,
+    "draw_supporters": 8
+  },
+  "cards": [
+    {"id": 741, "name": "Abra", "count": 3, "role": "evolution base"},
+    {"id": 742, "name": "Kadabra", "count": 3, "role": "Psychic Draw engine"},
+    {"id": 245, "name": "Alakazam", "count": 3, "role": "plan A attacker (1 energy)"},
+    {"id": 305, "name": "Dunsparce", "count": 3, "role": "evolution base"},
+    {"id": 306, "name": "Dudunsparce ex", "count": 2, "role": "1-energy scaling attacker"},
+    {"id": 140, "name": "Fezandipiti ex", "count": 2, "role": "draw ability + 3-energy finisher"},
+    {"id": 1006, "name": "Mega Audino ex", "count": 2, "role": "270 HP wall + 3-energy finisher"},
+
+    {"id": 1086, "name": "Buddy-Buddy Poffin", "count": 4, "role": "item: bench Abra / Dunsparce"},
+    {"id": 1152, "name": "Poké Pad", "count": 4, "role": "item: fetch any non-Rule-Box Pokémon"},
+    {"id": 1097, "name": "Night Stretcher", "count": 3, "role": "item: recover Pokémon or Basic Energy"},
+    {"id": 1146, "name": "Wondrous Patch", "count": 2, "role": "item: deterministic {P} ramp from discard"},
+    {"id": 1129, "name": "Sacred Ash", "count": 1, "role": "item: shuffle 5 Pokémon back"},
+
+    {"id": 1231, "name": "Dawn", "count": 3, "role": "supporter: fetch Basic + Stage 1 + Stage 2"},
+    {"id": 1182, "name": "Boss's Orders", "count": 3, "role": "supporter: gust"},
+    {"id": 1224, "name": "Cheren", "count": 3, "role": "draw supporter: draw 3, keep hand"},
+    {"id": 1213, "name": "Judge", "count": 3, "role": "draw supporter: draw 4 + disruption"},
+    {"id": 1227, "name": "Lillie's Determination", "count": 2, "role": "draw supporter: refill to 6"},
+
+    {"id": 1266, "name": "Nighttime Mine", "count": 2, "role": "stadium: taxes opposing Tera attacks"},
+
+    {"id": 5, "name": "Basic Psychic Energy", "count": 12, "role": "energy line"}
+  ],
+  "changes_from_live": [
+    {"cut": "Crispin x3", "added": "Cheren x3", "why": "Crispin caps at one card in a mono-{P} list"},
+    {"cut": "Enhanced Hammer x3", "added": "Judge x3", "why": "dead vs. basic-energy decks; Judge is never dead"},
+    {"cut": "Xerosic's Machinations x3", "added": "Wondrous Patch x2 + Lillie's x2 (minus Sacred Ash 1)", "why": "conditional hand strip -> deterministic ramp and unconditional draw"},
+    {"cut": "Audino x2", "added": "Kadabra +1, Alakazam +1", "why": "draw-to-6 body replaced; the Alakazam line is the cheap attacker"}
+  ]
+}
