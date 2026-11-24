@@ -467,6 +467,31 @@ def action_score(action: Any, obs: Any, belief: Any = None) -> float:
     return total
 
 
+def mandatory_action(obs: Any, legal_actions: Sequence[str]) -> Optional[tuple[str, str]]:
+    """Return the forced non-terminal action and its reason, or None.
+
+    Attach and development do not end the turn, so they must be resolved
+    before any scorer that treats an attack as immediately valuable. The
+    shared bot policy entry point calls this before ISMCTS; ``best_action``
+    also calls it for direct callers.
+    """
+    legal = [a for a in (legal_actions or []) if isinstance(a, str)]
+    if not legal or len(legal) == 1:
+        return None
+    if not _energy_attached(obs):
+        attach = best_attach_action(obs, legal)
+        if attach is not None:
+            return attach, "attach"
+    bench_empty = _bench_empty(obs)
+    attack_damage = _best_attack_damage(obs, legal)
+    development = best_development_action(
+        obs, legal, allow_play=bench_empty or attack_damage == 0
+    )
+    if development is not None:
+        return development, "development"
+    return None
+
+
 def best_action(obs: Any, legal_actions: Sequence[str], belief: Any = None) -> Optional[str]:
     """Return the highest scoring legal action, preserving legal order on ties."""
     legal = [a for a in (legal_actions or []) if isinstance(a, str)]
@@ -474,23 +499,9 @@ def best_action(obs: Any, legal_actions: Sequence[str], belief: Any = None) -> O
         return None
     if len(legal) == 1:
         return legal[0]
-    # Attach first: it does not end the turn, and the attack remains available.
-    if not _energy_attached(obs):
-        attach = best_attach_action(obs, legal)
-        if attach is not None:
-            return attach
-    # Developing the board must happen before an attack, because an attack
-    # ends the turn. Trainer plays are forced when the bench is empty (a lone
-    # Basic in hand is the only way to avoid no_active_pokemon) or when the
-    # best attack does zero damage; otherwise a damaging attack is allowed so
-    # the bot does not burn a Supporter blindly.
-    bench_empty = _bench_empty(obs)
-    attack_damage = _best_attack_damage(obs, legal)
-    development = best_development_action(
-        obs, legal, allow_play=bench_empty or attack_damage == 0
-    )
-    if development is not None:
-        return development
+    forced = mandatory_action(obs, legal)
+    if forced is not None:
+        return forced[0]
     best = legal[0]
     best_score = action_score(best, obs, belief)
     for action in legal[1:]:

@@ -9,7 +9,7 @@ import wr_report
 
 
 def test_policy_version_is_bumped():
-    assert arena_config.POLICY_VERSION == "l0-2026-11-23-belief-ismcts"
+    assert arena_config.POLICY_VERSION == "l1-2026-11-24-guardrail-first"
 
 
 def test_telemetry_uses_call_time_policy_version(monkeypatch):
@@ -56,8 +56,10 @@ def test_active_precommit_registers_new_version():
 
     doc = (
         Path(__file__).resolve().parents[1]
-        / "docs/precommit/2026-11-23-belief-ismcts-rebaseline.md"
+        / "docs/precommit/2026-11-24-guardrail-first.md"
     ).read_text()
     assert arena_config.POLICY_VERSION in doc
     assert "900" in doc
     assert "43.5" in doc
+    assert "47%" in doc
+    assert "rank 3 or better" in doc
