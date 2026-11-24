@@ -1,0 +1,19 @@
+{
+  "command": "python3 trace_eval.py --corpus ~/.arena-tcg-decisions.jsonl --json-out evidence/trace-eval.json",
+  "commit": "52acd37bf9c6c9fc8215bdb603d86f04fc1f706e",
+  "expected": "G-B PASS with illegal==0 and scorable>0 and no blocking findings",
+  "observed": "scorable=3416 illegal=0 changed=497 unscorable=0; gate=FAIL",
+  "counts": {
+    "ILLEGAL_ACTION": 0,
+    "MANDATORY_ACTION_BYPASS": 486,
+    "ATTRIBUTION_MISMATCH": 1542,
+    "UNSCORABLE_RECORD": 0,
+    "POLICY_DELTA": 497,
+    "LATENCY_REGRESSION": 0,
+    "SCHEMA_INVALID": 0
+  },
+  "exit_code": 1,
+  "status": "RUN",
+  "blocking_findings": 486,
+  "gate_b": "FAIL"
+}
