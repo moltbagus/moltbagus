@@ -4,9 +4,10 @@ type: feat
 date: 2026-11-24
 topic: trace-a2a-loop
 artifact_contract: ce-unified-plan/v1
-artifact_readiness: requirements-only
+artifact_readiness: implementation-ready
 product_contract_source: ce-brainstorm
 execution: code
+revision: 1
 ---
 
 # TRACE Eval, A2A Handoff and Loop-Graph Contract - Plan
@@ -19,7 +20,7 @@ execution: code
 
 **Product authority:** `~/.arena-tcg-decisions.jsonl` is the decision corpus. `replay.py` is the offline choice-delta gate. `arena_config.py` holds identity constants. Win rate over settled matches belongs to `wr_report.py` and is outside this scope.
 
-**Stop conditions:** This work ends at a committed requirements-only artifact. No policy change, live run, or agent dispatch is part of this scope.
+**Stop conditions:** This work ends at a committed implementation-ready artifact and offline evidence. No policy change, live run, or agent dispatch is part of this scope.
 
 **Open blockers:** The belief ISMCTS mandatory-action fix is in live code but not yet guarded by a trace-level regression gate, and the corpus still contains the 412 of 599 eligible decisions it affected. Offline A/B over the season pool remains blocked by the card-pool gap recorded in the world-class plan. Paid Stakes authorization is absent.
 
@@ -29,7 +30,7 @@ execution: code
 
 ### Summary
 
-Define a requirements-only contract for TRACE evaluation, agent-to-agent handoff, and a loop tick/state graph. The contract makes offline claims checkable and gives planning a fixed WHAT to enrich.
+Define an implementation-ready contract for TRACE evaluation, agent-to-agent handoff, and a loop tick/state graph. The contract makes offline claims checkable and gives an implementer a fixed WHAT and HOW.
 
 ### Problem Frame
 
@@ -43,7 +44,7 @@ The cost is repeated hand-derived claims and untraceable policy drift.
 
 **Offline-only evaluation.** Every command in this contract runs without arena API calls or credentials. (session-settled: user-directed — chosen over live replay and bot start: the task grants no live changes.) Governs R8, R10.
 
-**Requirements-only artifact.** This file records WHAT must be true and carries no implementation units. (session-settled: user-directed — chosen over implementation-ready: scope stops before planning.) Governs R17.
+**Implementation-ready artifact.** This file records WHAT must be true and HOW it is built. (session-settled: user-directed — chosen over requirements-only: the user asked to implement the evaluator.) Governs R17.
 
 **Extend the existing corpus, do not add a second store.** TRACE fields are additive to records already written by `telemetry.py`, so old and new records stay in one replayable file. Governs R1, R4.
 
@@ -90,7 +91,7 @@ R7. `POLICY_DELTA` alone never fails a gate; it becomes `blocking` only when pai
 
 **Automated eval commands**
 
-R8. The eval entry points are limited to `python3 -m pytest -q`, the compile check in `.agent-team/config.json`, and `python3 replay.py --path <corpus> --json-out <evidence>`, where `<corpus>` is `~/.arena-tcg-decisions.jsonl` or a repo-relative copy and `<evidence>` is repo-relative under `evidence/`.
+R8. The eval entry points are limited to `python3 -m pytest -q`, the compile check in `.agent-team/config.json`, `python3 replay.py --path <corpus> --json-out <evidence>`, and the offline `python3 trace_eval.py` commands in the Verification Contract.
 
 R9. Each R8 command writes one JSON evidence file under `evidence/` containing `command`, `commit`, `expected`, `observed`, per-class counts from R5, and `exit_code`; an evidence file missing any of these fields fails the eval.
 
@@ -128,7 +129,7 @@ flowchart TB
 
 **Acceptance gates**
 
-R17. G-A is PASS only when this artifact sits at the contracted path, carries `artifact_contract: ce-unified-plan/v1`, `artifact_readiness: requirements-only`, and `product_contract_source: ce-brainstorm`, and passes Complete, Consistent, Focused, and Usable by planning.
+R17. G-A is PASS only when this artifact sits at the contracted path, carries `artifact_contract: ce-unified-plan/v1`, `artifact_readiness: implementation-ready`, and `product_contract_source: ce-brainstorm`, and passes Complete, Consistent, Focused, and Usable by planning.
 
 R18. G-B is PASS only when every R8 command runs offline, exits 0, writes valid R9 evidence, and `replay.py` reports `illegal == 0` and `scorable > 0`; an absent corpus yields `NOT_RUN` under R10, and R20 is satisfied.
 
@@ -200,11 +201,163 @@ R20. An open `blocking` finding under R6 fails every gate that cites this rule; 
 
 ### Outstanding Questions
 
-**Deferred to Planning**
+**Resolved during planning**
 
-- Whether `mandatoryActionEligible` and `mandatoryActionSatisfied` are written by `telemetry.py` at decision time or derived by `replay.py` from stored `obs`; R2 fixes the field contract, not the producer.
-- Where the R14 tick chain is stored and which tool appends it; R14 fixes the record shape, not the store.
-- The numeric bound for `LATENCY_REGRESSION` under R5; it must be measured against the existing latency tests before it is written into a gate.
+- R2 producer: derive `mandatoryActionEligible` and `mandatoryActionSatisfied` offline in the evaluator from the stored `obs` through `scoring.mandatory_action`. Do not change `telemetry.py` or the live decision path. Rationale: historical records already contain `obs`, and a live telemetry change would be a decision-path-adjacent change inside a frozen window.
+- R14 store: append-only `evidence/trace-loop/ticks.jsonl`. The loop coordinator appends; no tick edits or deletes an earlier tick. Rationale: JSONL matches the existing decision corpus and needs no new database dependency.
+- R5 latency bound: 1,500 ms, taken from `tests/test_decision_latency.py` `MAX_LATENCY_S`. Records above this bound are `LATENCY_REGRESSION`. The spec's 1,400 ms ceiling is a runtime target; the repo's enforced test bound is the offline evaluator gate.
+
+**Deferred to implementation**
+
+- Exact helper names inside `trace_eval.py` and the tick CLI option spelling.
+- Whether a stale handoff's `SCHEMA_INVALID` finding is written to `evidence/` or returned only in the validator result.
+
+**Product Contract preservation:** unchanged. R-IDs, A-IDs, F-IDs, and AE-IDs keep their meaning.
+
+---
+
+## Planning Contract
+
+### Key Technical Decisions
+
+KTD1. Derive trace eligibility offline from the stored observation using the same `scoring.mandatory_action` that governs live decisions. Rationale: one rule source; no live changes; historical records become classifiable. Governs R2, R3, R5.
+
+KTD2. Keep the evaluator separate from `bot.py` and `bot_async.py`. Rationale: offline verification must not become a live dependency. Governs R8, R10.
+
+KTD3. Store handoffs and ticks as JSON under `evidence/`, append-only for ticks. Rationale: existing repo convention and no new storage service. Governs R11, R14, R15, R16.
+
+KTD4. Use git ancestry for R12 and tip-commit comparison for R16. Rationale: the check must be reproducible from the checkout without a network call. Governs R12, R16.
+
+### High-Level Technical Design
+
+```mermaid
+flowchart LR
+  C[decision corpus] --> E[trace_eval evaluator]
+  S[scoring.mandatory_action] --> E
+  E --> V[evidence JSON: command, commit, expected, observed, counts, exit_code]
+  V --> H[A2A envelope validator]
+  H --> T[append-only tick chain]
+  T --> G[gates G-B and G-C]
+```
+
+### Assumptions
+
+- The corpus contains public-only `obs` fields retained by `telemetry.py`; no hidden opponent hand is needed.
+- `arena_config.POLICY_VERSION` names the active policy version for `ATTRIBUTION_MISMATCH`.
+- `git` is available in the checkout for ancestry and HEAD checks.
+
+### Implementation Constraints
+
+- No credentials, network calls, bot start, or live process restart in any evaluator command.
+- No absolute host paths in committed files.
+- No change to `PRD.md`, `spec.md`, `kanban.md`, or `learnings.md` inside the evaluator implementation commit; those are updated by the coding-session closeout.
+
+### Sequencing
+
+U1 → U2 → U3. U1 creates evidence and taxonomy; U2 consumes it for handoff validation; U3 consumes both for ticks and gates.
+
+---
+
+## Implementation Units
+
+### U1. Offline evaluator and evidence writer
+
+**Goal:** Classify a decision corpus into the R5 taxonomy and write one R9 evidence file.
+
+**Requirements:** R1–R4, R5–R10, R18, R20. Covers AE1 and AE4.
+
+**Dependencies:** none.
+
+**Files:** `trace_eval.py`, `tests/test_trace_eval.py`, `evidence/trace-eval.json`.
+
+**Approach:** Add `traceId`, `parentTraceId`, and derived eligibility fields in memory. Count each R5 class once per finding. Write `command`, `commit`, `expected`, `observed`, `counts`, and `exit_code`. Return exit 0 only when no blocking finding exists; a missing corpus is `NOT_RUN` under R10.
+
+**Execution note:** Start with tests for AE1 and AE4 before implementation.
+
+**Test scenarios:**
+- Covers AE1: a record with eligible true and unsatisfied mandatory action yields one `MANDATORY_ACTION_BYPASS` finding and a failing G-B.
+- Covers AE4: a missing corpus path yields `NOT_RUN` with the path named and G-B not PASS.
+- Happy path: a small synthetic corpus with legal choices, no bypass, and one `POLICY_DELTA` yields zero blocking findings and valid evidence fields.
+- Edge case: a record with unknown policy version yields `mandatoryActionEligible: null`, not `false`.
+- Error path: a record whose chosen action is absent from `legalActions` yields `ILLEGAL_ACTION`.
+- Integration: the CLI writes evidence whose `command`, `commit`, `expected`, `observed`, `counts`, and `exit_code` fields are all present.
+
+**Verification:** The generated evidence file validates against R9; replay of the real corpus reports illegal zero and scorable greater than zero.
+
+### U2. A2A handoff validator
+
+**Goal:** Validate an R11 envelope before an implementing agent acts on it.
+
+**Requirements:** R11–R13, R19. Covers AE2.
+
+**Dependencies:** U1.
+
+**Files:** `trace_eval.py`, `tests/test_trace_eval.py`, `evidence/trace-handoff.json`.
+
+**Approach:** Require `task_id`, `from_agent`, `to_agent`, `base_commit`, `artifact_path`, `requirement_ids`, `findings`, `checks`, `blockers`, `next_action`. Reject when `base_commit` is not an ancestor of HEAD, when a cited artifact path is missing, or when a check lacks `command`, `expected`, `observed`, or `exit_code`.
+
+**Execution note:** Write the stale-commit rejection test first.
+
+**Test scenarios:**
+- Covers AE2: an envelope whose base commit is not an ancestor of HEAD is rejected with `SCHEMA_INVALID`.
+- Happy path: a complete envelope with an ancestor base commit and existing artifact references passes R12.
+- Error path: a missing cited artifact is rejected.
+- Edge case: an envelope with an open blocking finding is reported but not converted into a code change.
+
+**Verification:** A passing envelope produces a validator result that a second agent can reproduce from the checkout.
+
+### U3. Append-only tick chain and gate evaluation
+
+**Goal:** Append R14 ticks, derive R15 state, detect R16 drift, and report G-B/G-C.
+
+**Requirements:** R14–R20. Covers AE3.
+
+**Dependencies:** U1, U2.
+
+**Files:** `trace_eval.py`, `tests/test_trace_eval.py`, `evidence/trace-loop/ticks.jsonl`, `evidence/trace-gates.json`.
+
+**Approach:** Maintain `tick_id`, `parent_tick_id`, `task_id`, `commit`, `state`, `findings_ref`, `checks_ref`, `handoff_ref`, `created_at`. Reject a tick whose parent does not match the current tip, whose references are missing, or whose commit differs from HEAD. Flag drift when commit is unchanged, state changes, and no new evidence reference is supplied.
+
+**Execution note:** Write the unchanged-commit drift test first.
+
+**Test scenarios:**
+- Covers AE3: two ticks with the same commit and different state but no new evidence reference produce `BLOCKED` and `SCHEMA_INVALID`.
+- Happy path: a tick with valid references, parent equal to tip, and state derived from evidence is appended.
+- Edge case: an empty chain accepts a root tick with `parent_tick_id: null`.
+- Error path: a tick whose `commit` differs from HEAD is rejected under R16.
+- Integration: G-C passes only when the envelope, ticks, and evidence all resolve.
+
+**Verification:** The tick chain is append-only, the tip state matches its references, and G-B/G-C outcomes are reproducible offline.
+
+---
+
+## Verification Contract
+
+- `python3 -m py_compile trace_eval.py`
+- `python3 -m pytest -q tests/test_trace_eval.py`
+- `python3 -m pytest -q --ignore=tests/test_ab_deck.py --ignore=tests/test_ab_engine_lock.py`
+- `python3 trace_eval.py --corpus ~/.arena-tcg-decisions.jsonl --json-out evidence/trace-eval.json`
+- `python3 trace_eval.py validate-handoff --envelope evidence/trace-handoff.json`
+- `python3 trace_eval.py append-tick --tick evidence/trace-loop/tick.json --chain evidence/trace-loop/ticks.jsonl`
+- `python3 replay.py --path ~/.arena-tcg-decisions.jsonl --json-out evidence/replay.json`
+
+G-B is PASS only when the evaluator and replay commands exit 0, evidence fields are valid, replay illegal count is zero, and scorable count is greater than zero. G-C is PASS only when one envelope and one tick chain resolve all references and pass R12 and R16. An open blocking finding fails every citing gate.
+
+---
+
+## Definition of Done
+
+- All three U-IDs have observed verification results.
+- `trace_eval.py` runs from the repository root through its CLI entry point.
+- Evidence files contain every R9 field and no credential or host-home literal.
+- AE1, AE2, AE3, and AE4 each have a passing test.
+- No live policy, deck, process, credentials, or paid entry was touched.
+- Abandoned experimental code is absent from the diff.
+- `PRD.md`, `spec.md`, `kanban.md`, and `learnings.md` are refreshed in the coding-session closeout, not in the implementation commit.
+
+### Outstanding Questions
+
+**None. All questions are resolved or explicitly deferred to implementation.**
 
 **Resolve Before Planning**
 

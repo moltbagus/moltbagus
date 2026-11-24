@@ -1,0 +1,16 @@
+{
+  "command": "python3 -m py_compile trace_eval.py",
+  "commit": "30a1306338a47005cd2f62cf2a790e9fb53fefa1",
+  "expected": "compile OK",
+  "observed": "compile OK",
+  "counts": {
+    "ILLEGAL_ACTION": 0,
+    "MANDATORY_ACTION_BYPASS": 0,
+    "ATTRIBUTION_MISMATCH": 0,
+    "UNSCORABLE_RECORD": 0,
+    "POLICY_DELTA": 0,
+    "LATENCY_REGRESSION": 0,
+    "SCHEMA_INVALID": 0
+  },
+  "exit_code": 0
+}

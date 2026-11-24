@@ -1,0 +1,51 @@
+{
+  "records": 3605,
+  "scored": 3605,
+  "unscorable": 0,
+  "illegal": 0,
+  "changed": 497,
+  "changeRate": 0.1378640776699029,
+  "meanScoreDelta": -62.515,
+  "bySelectType": {
+    "0": {
+      "n": 2173,
+      "changed": 486
+    },
+    "1": {
+      "n": 1241,
+      "changed": 11
+    },
+    "4": {
+      "n": 1,
+      "changed": 0
+    },
+    "8": {
+      "n": 13,
+      "changed": 0
+    },
+    "9": {
+      "n": 177,
+      "changed": 0
+    }
+  },
+  "byPath": {
+    "belief": {
+      "n": 2729,
+      "changed": 497
+    },
+    "unknown": {
+      "n": 876,
+      "changed": 0
+    }
+  },
+  "matches": 87,
+  "policyVersions": [
+    "l0-2026-11-23-belief-ismcts",
+    "l1-2026-11-24-guardrail-first"
+  ],
+  "firstTs": 1795512386991,
+  "lastTs": 1795543749379,
+  "passed": true,
+  "policyVersion": "l1-2026-11-24-guardrail-first",
+  "generatedAt": "2026-11-25T02:09:51"
+}
