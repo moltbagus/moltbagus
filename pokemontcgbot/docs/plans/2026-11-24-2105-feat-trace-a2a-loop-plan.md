@@ -91,7 +91,7 @@ R7. `POLICY_DELTA` alone never fails a gate; it becomes `blocking` only when pai
 
 **Automated eval commands**
 
-R8. The eval entry points are limited to `python3 -m pytest -q`, the compile check in `.agent-team/config.json`, and `python3 replay.py --path <corpus> --json-out <evidence>`, where `<corpus>` is `~/.arena-tcg-decisions.jsonl` or a repo-relative copy and `<evidence>` is repo-relative under `evidence/`.
+R8. The eval entry points are limited to `python3 -m pytest -q`, the compile check in `.agent-team/config.json`, `python3 replay.py --path <corpus> --json-out <evidence>`, and the offline `python3 trace_eval.py` commands in the Verification Contract.
 
 R9. Each R8 command writes one JSON evidence file under `evidence/` containing `command`, `commit`, `expected`, `observed`, per-class counts from R5, and `exit_code`; an evidence file missing any of these fields fails the eval.
 
