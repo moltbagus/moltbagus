@@ -126,13 +126,21 @@ def test_valid_envelope_accepted(tmp_path):
         "command": "python3 -m py_compile trace_eval.py",
         "commit": head, "expected": "compile OK", "observed": "compile OK",
         "counts": {c: 0 for c in trace_eval.CLASSES}, "exit_code": 0,
+        "evidence_ref": "evidence/pycompile.json",
     }
+    evidence = {
+        "command": "python3 -m py_compile trace_eval.py", "commit": head,
+        "expected": "compile OK", "observed": "compile OK",
+        "counts": {c: 0 for c in trace_eval.CLASSES}, "exit_code": 0,
+    }
+    (ROOT / "evidence/pycompile.json").write_text(json.dumps(evidence))
     try:
         env = dict(ENVELOPE, base_commit=head, checks=[check])
         result = _validate_handoff(env, head=head)
         assert result["status"] == "PASS"
     finally:
         target.unlink()
+        (ROOT / "evidence/pycompile.json").unlink()
 
 
 def test_fabricated_check_rejected(tmp_path):
@@ -143,13 +151,43 @@ def test_fabricated_check_rejected(tmp_path):
         "command": "this-command-does-not-exist", "commit": head,
         "expected": "PASS", "observed": "PASS",
         "counts": {c: 0 for c in trace_eval.CLASSES}, "exit_code": 0,
+        "evidence_ref": "evidence/fabricated.json",
     }
+    (ROOT / "evidence/fabricated.json").write_text(json.dumps({
+        "command": "this-command-does-not-exist", "commit": head, "expected": "PASS",
+        "observed": "PASS", "counts": {c: 0 for c in trace_eval.CLASSES}, "exit_code": 0,
+    }))
     try:
         env = dict(ENVELOPE, base_commit=head, checks=[check])
         result = _validate_handoff(env, head=head)
         assert result["status"] == "REJECT"
     finally:
         target.unlink()
+        (ROOT / "evidence/fabricated.json").unlink()
+
+
+def test_fabricated_claim_rejected(tmp_path):
+    head = subprocess.run(["git", "-C", str(ROOT), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+    target = ROOT / "docs/plans/plan.md"
+    target.write_text("x")
+    check = {
+        "command": "python3 -m py_compile trace_eval.py", "commit": head,
+        "expected": "compile OK", "observed": "FABRICATED-OBSERVED",
+        "counts": {c: 999 for c in trace_eval.CLASSES}, "exit_code": 0,
+        "evidence_ref": "evidence/pycompile.json",
+    }
+    (ROOT / "evidence/pycompile.json").write_text(json.dumps({
+        "command": "python3 -m py_compile trace_eval.py", "commit": head,
+        "expected": "compile OK", "observed": "compile OK",
+        "counts": {c: 0 for c in trace_eval.CLASSES}, "exit_code": 0,
+    }))
+    try:
+        env = dict(ENVELOPE, base_commit=head, checks=[check])
+        result = _validate_handoff(env, head=head)
+        assert result["status"] == "REJECT"
+    finally:
+        target.unlink()
+        (ROOT / "evidence/pycompile.json").unlink()
 
 
 def test_gate_a_enrichment():

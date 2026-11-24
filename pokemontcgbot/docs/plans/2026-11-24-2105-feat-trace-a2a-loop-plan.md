@@ -20,7 +20,7 @@ revision: 1
 
 **Product authority:** `~/.arena-tcg-decisions.jsonl` is the decision corpus. `replay.py` is the offline choice-delta gate. `arena_config.py` holds identity constants. Win rate over settled matches belongs to `wr_report.py` and is outside this scope.
 
-**Stop conditions:** This work ends at a committed requirements-only artifact. No policy change, live run, or agent dispatch is part of this scope.
+**Stop conditions:** This work ends at a committed implementation-ready artifact and offline evidence. No policy change, live run, or agent dispatch is part of this scope.
 
 **Open blockers:** The belief ISMCTS mandatory-action fix is in live code but not yet guarded by a trace-level regression gate, and the corpus still contains the 412 of 599 eligible decisions it affected. Offline A/B over the season pool remains blocked by the card-pool gap recorded in the world-class plan. Paid Stakes authorization is absent.
 
@@ -30,7 +30,7 @@ revision: 1
 
 ### Summary
 
-Define a requirements-only contract for TRACE evaluation, agent-to-agent handoff, and a loop tick/state graph. The contract makes offline claims checkable and gives planning a fixed WHAT to enrich.
+Define an implementation-ready contract for TRACE evaluation, agent-to-agent handoff, and a loop tick/state graph. The contract makes offline claims checkable and gives an implementer a fixed WHAT and HOW.
 
 ### Problem Frame
 
@@ -44,7 +44,7 @@ The cost is repeated hand-derived claims and untraceable policy drift.
 
 **Offline-only evaluation.** Every command in this contract runs without arena API calls or credentials. (session-settled: user-directed — chosen over live replay and bot start: the task grants no live changes.) Governs R8, R10.
 
-**Requirements-only artifact.** This file records WHAT must be true and carries no implementation units. (session-settled: user-directed — chosen over implementation-ready: scope stops before planning.) Governs R17.
+**Implementation-ready artifact.** This file records WHAT must be true and HOW it is built. (session-settled: user-directed — chosen over requirements-only: the user asked to implement the evaluator.) Governs R17.
 
 **Extend the existing corpus, do not add a second store.** TRACE fields are additive to records already written by `telemetry.py`, so old and new records stay in one replayable file. Governs R1, R4.
 

@@ -217,8 +217,9 @@ def gate_b(report: Dict[str, Any]) -> str:
     return "FAIL"
 
 
-def write_evidence(corpus: Path, out: Path, active_version: Optional[str] = None) -> int:
-    report = evaluate_corpus(corpus, active_version)
+def write_evidence(corpus: Path, out: Path, active_version: Optional[str] = None,
+                   accepted_change_note: Optional[str] = None) -> int:
+    report = evaluate_corpus(corpus, active_version, accepted_change_note)
     gate = gate_b(report)
     commit = subprocess.run(
         ["git", "rev-parse", "HEAD"], capture_output=True, text=True,
@@ -260,14 +261,44 @@ ALLOWED_CHECKS = (
 )
 
 
-def rerun_check(check: Dict[str, Any], root: Path) -> Dict[str, Any]:
-    """Re-run a cited R8 check from the repo root; never use a shell."""
+def rerun_check(check: Dict[str, Any], root: Path, head: str = "HEAD") -> Dict[str, Any]:
+    """Re-run a cited R8 check and verify its claimed fields against its evidence."""
     import shlex
     command = str(check.get("command") or "")
     argv = shlex.split(command)
     argv = [str(Path(arg).expanduser()) if arg.startswith("~/") else arg for arg in argv]
     if not argv or argv[0] != "python3" or not command.startswith(ALLOWED_CHECKS):
         return {"status": "REJECT", "reason": "command not in allowed R8 set"}
+    evidence_ref = check.get("evidence_ref")
+    if not evidence_ref:
+        return {"status": "REJECT", "reason": "check has no evidence_ref"}
+    evidence_path = Path(evidence_ref)
+    if not evidence_path.is_absolute():
+        evidence_path = root / evidence_path
+    try:
+        evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        return {"status": "NOT_RUN", "reason": f"unreadable evidence_ref: {type(exc).__name__}"}
+    required = {"command", "commit", "expected", "observed", "counts", "exit_code"}
+    if not required <= set(evidence):
+        return {"status": "REJECT", "reason": "evidence_ref missing R9 fields"}
+    if head == "HEAD":
+        head = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+    mismatches = []
+    if check.get("commit") != evidence.get("commit"):
+        mismatches.append("commit")
+    if check.get("observed") != evidence.get("observed"):
+        mismatches.append("observed")
+    if check.get("counts") != evidence.get("counts"):
+        mismatches.append("counts")
+    if check.get("exit_code") != evidence.get("exit_code"):
+        mismatches.append("exit_code")
+    if str(check.get("command")) != str(evidence.get("command")):
+        mismatches.append("command")
+    if mismatches:
+        return {"status": "REJECT", "reason": f"claim mismatches evidence: {mismatches}"}
+    if evidence.get("commit") != head:
+        return {"status": "REJECT", "reason": f"evidence commit {evidence.get('commit')} differs from evaluation head {head}"}
     try:
         result = subprocess.run(argv, capture_output=True, text=True, cwd=root, timeout=180)
     except (OSError, subprocess.SubprocessError) as exc:
@@ -299,7 +330,7 @@ def validate_handoff(envelope: Dict[str, Any], head: str = "HEAD", root: Optiona
         } <= set(check):
             findings.append(_finding("SCHEMA_INVALID", "blocking", "envelope", "R9", "check missing full R9 evidence fields"))
             continue
-        rerun = rerun_check(check, root)
+        rerun = rerun_check(check, root, head=head)
         if rerun["status"] != "RUN" or not rerun.get("match"):
             findings.append(_finding(
                 "SCHEMA_INVALID", "blocking", "envelope", "R12",
@@ -448,6 +479,29 @@ def gate_a(plan_path: Path) -> str:
     return "PASS" if all(token in text for token in required) else "FAIL"
 
 
+def write_gate_evidence(plan: Path, evidence: Path, envelope_path: Path, chain: Path,
+                        out: Path, head: str) -> int:
+    eval_ev = json.loads(evidence.read_text(encoding="utf-8"))
+    envelope = json.loads(envelope_path.read_text(encoding="utf-8"))
+    ticks = _read_chain(chain)
+    a = gate_a(plan)
+    b = str(eval_ev.get("gate_b") or "NOT_RUN")
+    c = gate_c(envelope, ticks, head)
+    blocked = any(v in ("FAIL", "BLOCKED") for v in (a, b, c))
+    payload = {
+        "command": f"python3 trace_eval.py gates --plan {_display_path(plan)} --evidence {_display_path(evidence)} --envelope {_display_path(envelope_path)} --chain {_display_path(chain)} --head {head} --json-out {_display_path(out)}",
+        "commit": head,
+        "expected": "G-A PASS, G-B PASS, G-C PASS",
+        "observed": f"G-A={a} G-B={b} G-C={c}",
+        "counts": eval_ev.get("counts", {}),
+        "exit_code": 1 if blocked else 0,
+        "gates": {"G-A": a, "G-B": b, "G-C": c},
+    }
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    return payload["exit_code"]
+
+
 def main(argv: Optional[Iterable[str]] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--corpus", type=Path)
@@ -461,6 +515,13 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
     tick.add_argument("--tick", type=Path, required=True)
     tick.add_argument("--chain", type=Path, required=True)
     tick.add_argument("--head", default="HEAD")
+    gates = sub.add_parser("gates")
+    gates.add_argument("--plan", type=Path, required=True)
+    gates.add_argument("--evidence", type=Path, required=True)
+    gates.add_argument("--envelope", type=Path, required=True)
+    gates.add_argument("--chain", type=Path, required=True)
+    gates.add_argument("--head", default="HEAD")
+    gates.add_argument("--json-out", type=Path, required=True)
     args = parser.parse_args(list(argv) if argv is not None else None)
 
     if args.command == "validate-handoff":
@@ -473,6 +534,12 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
         result = append_tick(tick_obj, args.chain, head=args.head)
         print(json.dumps(result, indent=2))
         return 0 if result["status"] == "PASS" else 1
+    if args.command == "gates":
+        rc = write_gate_evidence(
+            args.plan, args.evidence, args.envelope, args.chain, args.json_out, args.head
+        )
+        print(json.dumps(json.loads(args.json_out.read_text(encoding="utf-8")), indent=2))
+        return rc
     if not args.corpus or not args.json_out:
         parser.error("--corpus and --json-out are required")
     return write_evidence(args.corpus, args.json_out, args.active_version)
