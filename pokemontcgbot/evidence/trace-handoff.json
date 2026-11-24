@@ -2,7 +2,7 @@
   "task_id": "TASK-TRACE-IMPL",
   "from_agent": "lead",
   "to_agent": "reviewer",
-  "base_commit": "975ed2c27f50897c7028c7fe04b314385778acd8",
+  "base_commit": "30a1306338a47005cd2f62cf2a790e9fb53fefa1",
   "artifact_path": "docs/plans/2026-11-24-2105-feat-trace-a2a-loop-plan.md",
   "requirement_ids": [
     "R1",
@@ -32,13 +32,13 @@
       "class": "MANDATORY_ACTION_BYPASS",
       "severity": "blocking",
       "requirementId": "R2",
-      "evidence": "486 blocking bypass findings; see evidence/trace-eval.json"
+      "evidence": "486 mandatory bypass findings; see evidence/trace-eval.json"
     }
   ],
   "checks": [
     {
       "command": "python3 -m py_compile trace_eval.py",
-      "commit": "975ed2c27f50897c7028c7fe04b314385778acd8",
+      "commit": "30a1306338a47005cd2f62cf2a790e9fb53fefa1",
       "expected": "compile OK",
       "observed": "compile OK",
       "counts": {
@@ -50,22 +50,29 @@
         "LATENCY_REGRESSION": 0,
         "SCHEMA_INVALID": 0
       },
-      "exit_code": 0
+      "exit_code": 0,
+      "evidence_ref": "evidence/pycompile.json"
     },
     {
-      "command": "python3 replay.py --path ~/.arena-tcg-decisions.jsonl --json-out evidence/replay.json",
-      "commit": "975ed2c27f50897c7028c7fe04b314385778acd8",
-      "expected": "illegal==0 scorable>0",
-      "observed": "illegal=0 scorable=3416",
+      "command": "python3 trace_eval.py --corpus ~/.arena-tcg-decisions.jsonl --json-out evidence/trace-eval.json",
+      "commit": "30a1306338a47005cd2f62cf2a790e9fb53fefa1",
+      "expected": "G-B PASS with illegal==0 and scorable>0 and no blocking findings",
+      "observed": "scorable=3605 illegal=0 changed=497 unscorable=0; gate=FAIL",
       "counts": {
         "ILLEGAL_ACTION": 0,
-        "UNSCORABLE_RECORD": 0
+        "MANDATORY_ACTION_BYPASS": 486,
+        "ATTRIBUTION_MISMATCH": 1542,
+        "UNSCORABLE_RECORD": 0,
+        "POLICY_DELTA": 497,
+        "LATENCY_REGRESSION": 0,
+        "SCHEMA_INVALID": 0
       },
-      "exit_code": 0
+      "exit_code": 1,
+      "evidence_ref": "evidence/trace-eval.json"
     }
   ],
   "blockers": [
-    "G-B FAIL: 486 blocking findings in historical corpus"
+    "G-B FAIL: 983 blocking findings in historical corpus"
   ],
-  "next_action": "do not merge until historical corpus is partitioned by policy version"
+  "next_action": "partition historical corpus by policy version before promoting G-B; evaluator itself is complete"
 }

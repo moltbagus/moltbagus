@@ -1,0 +1,21 @@
+{
+  "command": "python3 trace_eval.py gates --plan docs/plans/2026-11-24-2105-feat-trace-a2a-loop-plan.md --evidence evidence/trace-eval.json --envelope evidence/trace-handoff.json --chain evidence/trace-loop/ticks.jsonl --head 30a1306338a47005cd2f62cf2a790e9fb53fefa1 --json-out evidence/trace-gates.json",
+  "commit": "30a1306338a47005cd2f62cf2a790e9fb53fefa1",
+  "expected": "G-A PASS, G-B PASS, G-C PASS",
+  "observed": "G-A=PASS G-B=FAIL G-C=BLOCKED",
+  "counts": {
+    "ILLEGAL_ACTION": 0,
+    "MANDATORY_ACTION_BYPASS": 486,
+    "ATTRIBUTION_MISMATCH": 1542,
+    "UNSCORABLE_RECORD": 0,
+    "POLICY_DELTA": 497,
+    "LATENCY_REGRESSION": 0,
+    "SCHEMA_INVALID": 0
+  },
+  "exit_code": 1,
+  "gates": {
+    "G-A": "PASS",
+    "G-B": "FAIL",
+    "G-C": "BLOCKED"
+  }
+}
