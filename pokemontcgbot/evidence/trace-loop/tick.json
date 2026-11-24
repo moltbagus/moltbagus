@@ -2,10 +2,10 @@
   "tick_id": "trace-1",
   "parent_tick_id": null,
   "task_id": "TASK-TRACE-IMPL",
-  "commit": "52acd37bf9c6c9fc8215bdb603d86f04fc1f706e",
-  "state": "VERIFYING",
+  "commit": "975ed2c27f50897c7028c7fe04b314385778acd8",
+  "state": "BLOCKED",
   "findings_ref": "evidence/trace-eval.json",
   "checks_ref": "evidence/trace-handoff.json",
   "handoff_ref": "evidence/trace-handoff.json",
-  "created_at": "2026-11-24T00:00:00+00:00"
+  "created_at": "2026-11-25T00:00:00+00:00"
 }

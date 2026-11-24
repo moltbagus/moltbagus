@@ -118,14 +118,68 @@ def test_ae2_stale_envelope_rejected(tmp_path):
         target.unlink()
 
 
-def test_valid_envelope_accepted():
+def test_valid_envelope_accepted(tmp_path):
+    head = subprocess.run(["git", "-C", str(ROOT), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+    target = ROOT / "docs/plans/plan.md"
+    target.write_text("x")
+    check = {
+        "command": "python3 -m py_compile trace_eval.py",
+        "commit": head, "expected": "compile OK", "observed": "compile OK",
+        "counts": {c: 0 for c in trace_eval.CLASSES}, "exit_code": 0,
+    }
+    try:
+        env = dict(ENVELOPE, base_commit=head, checks=[check])
+        result = _validate_handoff(env, head=head)
+        assert result["status"] == "PASS"
+    finally:
+        target.unlink()
+
+
+def test_fabricated_check_rejected(tmp_path):
+    head = subprocess.run(["git", "-C", str(ROOT), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+    target = ROOT / "docs/plans/plan.md"
+    target.write_text("x")
+    check = {
+        "command": "this-command-does-not-exist", "commit": head,
+        "expected": "PASS", "observed": "PASS",
+        "counts": {c: 0 for c in trace_eval.CLASSES}, "exit_code": 0,
+    }
+    try:
+        env = dict(ENVELOPE, base_commit=head, checks=[check])
+        result = _validate_handoff(env, head=head)
+        assert result["status"] == "REJECT"
+    finally:
+        target.unlink()
+
+
+def test_gate_a_enrichment():
+    plan = ROOT / "docs/plans/2026-11-24-2105-feat-trace-a2a-loop-plan.md"
+    assert trace_eval.gate_a(plan) == "PASS"
+
+
+def test_gate_c_rejects_stale_tip(tmp_path):
+    env = dict(ENVELOPE, base_commit="a")
+    ticks = [{"commit": "old", "state": "VERIFYING"}]
+    assert trace_eval.gate_c(env, ticks, head="new") == "BLOCKED"
+
+
+def test_display_path_normalizes_home():
+    p = Path.home() / ".arena-does-not-exist.jsonl"
+    assert trace_eval._display_path(p) == "~/.arena-does-not-exist.jsonl"
+
+
+def test_handoff_with_blocking_finding_rejected(tmp_path):
     head = subprocess.run(["git", "-C", str(ROOT), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
     target = ROOT / "docs/plans/plan.md"
     target.write_text("x")
     try:
-        env = dict(ENVELOPE, base_commit=head)
+        blocker = {
+            "traceId": "t", "class": "MANDATORY_ACTION_BYPASS", "severity": "blocking",
+            "requirementId": "R2", "evidence": "historical bypass",
+        }
+        env = dict(ENVELOPE, base_commit=head, findings=[blocker], blockers=["G-B FAIL"])
         result = _validate_handoff(env, head=head)
-        assert result["status"] == "PASS"
+        assert result["status"] == "REJECT"
     finally:
         target.unlink()
 
@@ -144,13 +198,15 @@ def test_ae3_drift_on_unchanged_commit(tmp_path):
 
 
 def test_root_tick_and_append_with_new_evidence(tmp_path):
-    valid = {"requirement_ids": ["R1"], "findings": [], "checks": [], "blockers": []}
-    (tmp_path / "e1.json").write_text(json.dumps(valid))
-    (tmp_path / "e2.json").write_text(json.dumps(valid))
+    e1 = {"requirement_ids": ["R1"], "findings": [], "checks": [], "blockers": [],
+          "gate_b": "PASS", "status": "RUN"}
+    e2 = dict(e1, gate_b="PASS")
+    (tmp_path / "e1.json").write_text(json.dumps(e1))
+    (tmp_path / "e2.json").write_text(json.dumps(e2))
     chain = tmp_path / "ticks.jsonl"
     head = "abc123"
-    t0 = trace_eval.new_tick("root", None, "T1", head, "VERIFYING", "e1.json", "e1.json", None)
+    t0 = trace_eval.new_tick("root", None, "T1", head, "IMPLEMENTING", "e1.json", "e1.json", None)
     assert trace_eval.append_tick(t0, chain, head=head)["status"] == "PASS"
-    t1 = trace_eval.new_tick("next", "root", "T1", head, "DONE", "e2.json", "e2.json", None)
+    t1 = trace_eval.new_tick("next", "root", "T1", head, "IMPLEMENTING", "e2.json", "e2.json", None)
     assert trace_eval.append_tick(t1, chain, head=head)["status"] == "PASS"
     assert len(chain.read_text().splitlines()) == 2

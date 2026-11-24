@@ -2,7 +2,7 @@
   "task_id": "TASK-TRACE-IMPL",
   "from_agent": "lead",
   "to_agent": "reviewer",
-  "base_commit": "52acd37bf9c6c9fc8215bdb603d86f04fc1f706e",
+  "base_commit": "975ed2c27f50897c7028c7fe04b314385778acd8",
   "artifact_path": "docs/plans/2026-11-24-2105-feat-trace-a2a-loop-plan.md",
   "requirement_ids": [
     "R1",
@@ -26,15 +26,46 @@
     "R19",
     "R20"
   ],
-  "findings": [],
+  "findings": [
+    {
+      "traceId": "evidence/trace-eval.json",
+      "class": "MANDATORY_ACTION_BYPASS",
+      "severity": "blocking",
+      "requirementId": "R2",
+      "evidence": "486 blocking bypass findings; see evidence/trace-eval.json"
+    }
+  ],
   "checks": [
     {
-      "command": "python3 -m pytest -q tests/test_trace_eval.py",
-      "expected": "10 passed",
-      "observed": "10 passed",
+      "command": "python3 -m py_compile trace_eval.py",
+      "commit": "975ed2c27f50897c7028c7fe04b314385778acd8",
+      "expected": "compile OK",
+      "observed": "compile OK",
+      "counts": {
+        "ILLEGAL_ACTION": 0,
+        "MANDATORY_ACTION_BYPASS": 0,
+        "ATTRIBUTION_MISMATCH": 0,
+        "UNSCORABLE_RECORD": 0,
+        "POLICY_DELTA": 0,
+        "LATENCY_REGRESSION": 0,
+        "SCHEMA_INVALID": 0
+      },
+      "exit_code": 0
+    },
+    {
+      "command": "python3 replay.py --path ~/.arena-tcg-decisions.jsonl --json-out evidence/replay.json",
+      "commit": "975ed2c27f50897c7028c7fe04b314385778acd8",
+      "expected": "illegal==0 scorable>0",
+      "observed": "illegal=0 scorable=3416",
+      "counts": {
+        "ILLEGAL_ACTION": 0,
+        "UNSCORABLE_RECORD": 0
+      },
       "exit_code": 0
     }
   ],
-  "blockers": [],
-  "next_action": "independent review before merge"
+  "blockers": [
+    "G-B FAIL: 486 blocking findings in historical corpus"
+  ],
+  "next_action": "do not merge until historical corpus is partitioned by policy version"
 }

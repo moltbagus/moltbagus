@@ -79,7 +79,7 @@ def _eligibility(record: Dict[str, Any]) -> tuple[Optional[bool], Optional[bool]
     return True, chosen == forced[0]
 
 
-def evaluate_corpus(path: Path, active_version: Optional[str] = None) -> Dict[str, Any]:
+def evaluate_corpus(path: Path, active_version: Optional[str] = None, accepted_change_note: Optional[str] = None) -> Dict[str, Any]:
     """Read a JSONL corpus and return traces, findings, and counts."""
     active = active_version or arena_config.POLICY_VERSION
     path = Path(path)
@@ -87,7 +87,7 @@ def evaluate_corpus(path: Path, active_version: Optional[str] = None) -> Dict[st
         return {
             "status": "NOT_RUN",
             "command": "trace_eval.evaluate_corpus",
-            "observed": f"missing corpus: {path}",
+            "observed": f"{_display_path(path)}; gate=NOT_RUN",
             "traces": [],
             "findings": [],
             "counts": {c: 0 for c in CLASSES},
@@ -182,6 +182,17 @@ def evaluate_corpus(path: Path, active_version: Optional[str] = None) -> Dict[st
                 counts["POLICY_DELTA"] += 1
                 findings.append(_finding("POLICY_DELTA", "observed", tid, "R7", f"recorded {chosen}, replay {replay}"))
 
+    # R7: a policy delta alone stays observed. It becomes blocking when any
+    # other finding is blocking or no accepted-change note is attached.
+    other_blocking = any(
+        f.get("severity") == "blocking" and f.get("class") != "POLICY_DELTA"
+        for f in findings
+    )
+    if other_blocking or not accepted_change_note:
+        for f in findings:
+            if f.get("class") == "POLICY_DELTA":
+                f["severity"] = "blocking"
+
     return {
         "status": "RUN",
         "command": "trace_eval.evaluate_corpus",
@@ -244,7 +255,34 @@ def _is_ancestor(base: str, head: str) -> bool:
     return result.returncode == 0
 
 
-def validate_handoff(envelope: Dict[str, Any], head: str = "HEAD") -> Dict[str, Any]:
+ALLOWED_CHECKS = (
+    "python3 -m pytest", "python3 -m py_compile", "python3 replay.py", "python3 trace_eval.py",
+)
+
+
+def rerun_check(check: Dict[str, Any], root: Path) -> Dict[str, Any]:
+    """Re-run a cited R8 check from the repo root; never use a shell."""
+    import shlex
+    command = str(check.get("command") or "")
+    argv = shlex.split(command)
+    argv = [str(Path(arg).expanduser()) if arg.startswith("~/") else arg for arg in argv]
+    if not argv or argv[0] != "python3" or not command.startswith(ALLOWED_CHECKS):
+        return {"status": "REJECT", "reason": "command not in allowed R8 set"}
+    try:
+        result = subprocess.run(argv, capture_output=True, text=True, cwd=root, timeout=180)
+    except (OSError, subprocess.SubprocessError) as exc:
+        return {"status": "NOT_RUN", "reason": f"{type(exc).__name__}: {exc}"}
+    return {
+        "status": "RUN",
+        "exit_code": result.returncode,
+        "expected_exit_code": check.get("exit_code"),
+        "match": result.returncode == check.get("exit_code"),
+        "observed_tail": result.stdout[-500:],
+    }
+
+
+def validate_handoff(envelope: Dict[str, Any], head: str = "HEAD", root: Optional[Path] = None) -> Dict[str, Any]:
+    root = root or Path(__file__).resolve().parent
     findings: List[Dict[str, Any]] = []
     missing = [f for f in ENVELOPE_FIELDS if f not in envelope]
     if missing:
@@ -256,9 +294,22 @@ def validate_handoff(envelope: Dict[str, Any], head: str = "HEAD") -> Dict[str, 
     if base and not _is_ancestor(str(base), head):
         findings.append(_finding("SCHEMA_INVALID", "blocking", "envelope", "R12", f"base_commit {base} is not ancestor of {head}"))
     for check in envelope.get("checks") or []:
-        if not isinstance(check, dict) or not {"command", "expected", "observed", "exit_code"} <= set(check):
-            findings.append(_finding("SCHEMA_INVALID", "observed", "envelope", "R9", "check missing evidence fields"))
-    status = "PASS" if not any(f["severity"] == "blocking" for f in findings) else "REJECT"
+        if not isinstance(check, dict) or not {
+            "command", "commit", "expected", "observed", "counts", "exit_code"
+        } <= set(check):
+            findings.append(_finding("SCHEMA_INVALID", "blocking", "envelope", "R9", "check missing full R9 evidence fields"))
+            continue
+        rerun = rerun_check(check, root)
+        if rerun["status"] != "RUN" or not rerun.get("match"):
+            findings.append(_finding(
+                "SCHEMA_INVALID", "blocking", "envelope", "R12",
+                f"check re-run failed: {rerun}",
+            ))
+    if envelope.get("findings"):
+        findings.extend(envelope["findings"])
+    for blocker in envelope.get("blockers") or []:
+        findings.append(_finding("SCHEMA_INVALID", "blocking", "envelope", "R20", str(blocker)))
+    status = "PASS" if not any(f.get("severity") == "blocking" for f in findings) else "REJECT"
     return {"status": status, "findings": findings, "base_commit": base, "head": head}
 
 
@@ -288,13 +339,49 @@ def _read_chain(path: Path) -> List[Dict[str, Any]]:
     return out
 
 
+def _resolve_ref(ref: Optional[str], chain: Path) -> Optional[Path]:
+    if not ref:
+        return None
+    path = Path(ref)
+    if path.is_absolute() or path.exists():
+        return path if path.exists() else None
+    sibling = chain.parent / path.name
+    return sibling if sibling.exists() else None
+
+
+def _derive_state(tick: Dict[str, Any], chain: Path) -> str:
+    findings_path = _resolve_ref(tick.get("findings_ref"), chain)
+    checks_path = _resolve_ref(tick.get("checks_ref"), chain)
+    handoff_path = _resolve_ref(tick.get("handoff_ref"), chain)
+    for path in (findings_path, checks_path):
+        if not path:
+            return "BLOCKED"
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            return "BLOCKED"
+        if not isinstance(data, dict):
+            return "BLOCKED"
+        if data.get("blocking_findings", 0) or data.get("gate_b") == "FAIL" or data.get("status") == "BLOCKED":
+            return "BLOCKED"
+        if data.get("findings"):
+            return "BLOCKED"
+    return "VERIFYING" if handoff_path else "IMPLEMENTING"
+
+
 def append_tick(tick: Dict[str, Any], chain: Path, head: str = "HEAD") -> Dict[str, Any]:
     findings: List[Dict[str, Any]] = []
     missing = [f for f in TICK_FIELDS if f not in tick]
     if missing:
         findings.append(_finding("SCHEMA_INVALID", "blocking", str(tick.get("tick_id")), "R14", f"missing fields: {missing}"))
-    if tick.get("state") not in STATES:
-        findings.append(_finding("SCHEMA_INVALID", "blocking", str(tick.get("tick_id")), "R15", f"invalid state: {tick.get('state')}"))
+    derived = _derive_state(tick, chain)
+    if tick.get("state") != derived:
+        findings.append(_finding(
+            "SCHEMA_INVALID", "blocking", str(tick.get("tick_id")), "R15",
+            f"state {tick.get('state')} does not match derived state {derived}",
+        ))
+    else:
+        tick["state"] = derived
     for ref_key in ("findings_ref", "checks_ref", "handoff_ref"):
         ref = tick.get(ref_key)
         if not ref:
@@ -317,6 +404,11 @@ def append_tick(tick: Dict[str, Any], chain: Path, head: str = "HEAD") -> Dict[s
     if tick.get("parent_tick_id") != expected_parent:
         findings.append(_finding("SCHEMA_INVALID", "blocking", str(tick.get("tick_id")), "R14", f"parent must be {expected_parent}"))
     if tip is not None:
+        if tip.get("commit") != head:
+            findings.append(_finding(
+                "SCHEMA_INVALID", "blocking", str(tip.get("tick_id")), "R16",
+                f"tip commit {tip.get('commit')} differs from evaluation head {head}",
+            ))
         same_commit = tip.get("commit") == tick.get("commit")
         state_changed = tip.get("state") != tick.get("state")
         new_evidence = (tip.get("findings_ref"), tip.get("checks_ref")) != (tick.get("findings_ref"), tick.get("checks_ref"))
@@ -330,6 +422,30 @@ def append_tick(tick: Dict[str, Any], chain: Path, head: str = "HEAD") -> Dict[s
     with chain.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(tick) + "\n")
     return {"status": "PASS", "findings": findings}
+
+
+def gate_c(envelope: Dict[str, Any], ticks: List[Dict[str, Any]], head: str) -> str:
+    if not ticks:
+        return "NOT_RUN"
+    if any(t.get("commit") != head for t in ticks):
+        return "BLOCKED"
+    if _derive_state(ticks[-1], Path(".")) == "BLOCKED":
+        return "BLOCKED"
+    validation = validate_handoff(envelope, head=head)
+    return "PASS" if validation["status"] == "PASS" else "BLOCKED"
+
+
+def gate_a(plan_path: Path) -> str:
+    try:
+        text = Path(plan_path).read_text(encoding="utf-8")
+    except OSError:
+        return "NOT_RUN"
+    required = (
+        "artifact_contract: ce-unified-plan/v1",
+        "artifact_readiness: implementation-ready",
+        "product_contract_source: ce-brainstorm",
+    )
+    return "PASS" if all(token in text for token in required) else "FAIL"
 
 
 def main(argv: Optional[Iterable[str]] = None) -> int:

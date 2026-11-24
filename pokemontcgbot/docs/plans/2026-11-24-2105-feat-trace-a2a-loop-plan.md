@@ -129,7 +129,7 @@ flowchart TB
 
 **Acceptance gates**
 
-R17. G-A is PASS only when this artifact sits at the contracted path, carries `artifact_contract: ce-unified-plan/v1`, `artifact_readiness: requirements-only`, and `product_contract_source: ce-brainstorm`, and passes Complete, Consistent, Focused, and Usable by planning.
+R17. G-A is PASS only when this artifact sits at the contracted path, carries `artifact_contract: ce-unified-plan/v1`, `artifact_readiness: implementation-ready`, and `product_contract_source: ce-brainstorm`, and passes Complete, Consistent, Focused, and Usable by planning.
 
 R18. G-B is PASS only when every R8 command runs offline, exits 0, writes valid R9 evidence, and `replay.py` reports `illegal == 0` and `scorable > 0`; an absent corpus yields `NOT_RUN` under R10, and R20 is satisfied.
 
