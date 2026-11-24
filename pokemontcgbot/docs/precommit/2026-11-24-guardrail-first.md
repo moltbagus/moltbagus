@@ -22,14 +22,16 @@ immediately valuable and ended turns without the free attachment. Fix:
 - **Boundary:** the first decision record in `~/.arena-tcg-decisions.jsonl`
   whose `policyVersion` is `l1-2026-11-24-guardrail-first`. The corpus marks the
   start; no clock or commit hash is argued after the fact.
-- **Sample:** 500 settled matches. Report nowhere earlier; a smaller window is
+- **Sample:** 900 settled matches. Report nowhere earlier; a smaller window is
   a progress marker, not a result.
-- **Bound:** point estimate ≥ 46% with Wilson 95% lower bound ≥ 42%. This is G1
-  from the world-class plan, chosen before the window opened.
+- **Bound:** G1 from the accepted plan R6 — point estimate at least 47% with a
+  Wilson 95% lower bound at least 43.5%, and rank 3 or better at sample close.
+  This is the exact gate in
+  `docs/plans/2026-11-20-1914-feat-world-class-tcg-bot-plan.md`.
 - **Freeze:** no policy or deck change ships inside this window. A decision
   change voids it and requires a new precommit before restart.
-- **Reversion:** if the 500-match lower bound is below 42%, revert the change
-  and register a fresh boundary.
+- **Reversion:** if the 900-match point estimate or lower bound misses G1, or
+  rank is worse than 3, revert the change and register a fresh boundary.
 
 ## Attribution contract
 

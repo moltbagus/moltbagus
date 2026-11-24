@@ -471,8 +471,9 @@ def mandatory_action(obs: Any, legal_actions: Sequence[str]) -> Optional[tuple[s
     """Return the forced non-terminal action and its reason, or None.
 
     Attach and development do not end the turn, so they must be resolved
-    before any scorer that treats an attack as immediately valuable. Both
-    ``best_action`` and the belief ISMCTS path call this first.
+    before any scorer that treats an attack as immediately valuable. The
+    shared bot policy entry point calls this before ISMCTS; ``best_action``
+    also calls it for direct callers.
     """
     legal = [a for a in (legal_actions or []) if isinstance(a, str)]
     if not legal or len(legal) == 1:

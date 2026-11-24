@@ -39,7 +39,7 @@ MAX_CANDIDATES = 24
 # carries when no caller attributed it (direct ``build_record`` calls, or
 # corpora written before attribution existed). Replay groups ``changed`` by
 # this field so a belief-path override is never mistaken for a policy delta.
-POLICY_PATHS = ("belief", "scoring", "fallback")
+POLICY_PATHS = ("belief", "mandatory", "scoring", "fallback")
 
 
 def _policy_path(value: Any) -> str:
