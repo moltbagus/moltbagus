@@ -38,9 +38,12 @@
 - [x] Offline v2 package: tracker, engine, expectimax, reproducible paired-seed benchmark, Docker image, and real-schema adapter.
 - [x] Privacy guard fix in committed README; HEAD == origin/main before docs update.
 
+## Done (2026-11-24 evaluator)
+- [x] TRACE/A2A/loop evaluator merged at `614b72a` after three independent review rounds; no blockers at final review.
+- [x] Offline gate evidence committed: G-A PASS, G-B FAIL, G-C BLOCKED; historical-corpus defects recorded, not hidden.
+- [x] Full suite 209 passed, focused 16 passed, live synced and re-tested.
+
 ## In Progress (2026-11-24)
-- [x] Idle-gated pm2 restart on WSL: `activeMatches == 0`, restart completed 2026-11-24T21:28:35+08, new PID 3485746, restarts=4, one poller. Live files report policy `l1-2026-11-24-guardrail-first`.
-- [x] Repo → WSL live sync of verified code and docs.
 - [ ] Measure `l1-2026-11-24-guardrail-first` to the 900-match precommit; result `NOT_RUN` until sample closes.
 
 ## Done (2026-11-24)

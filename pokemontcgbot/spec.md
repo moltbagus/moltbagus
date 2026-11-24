@@ -82,6 +82,13 @@ Out of scope (future):
 - The uploaded `runner.py`/`config.py` deployment variant is stored only as `deploy_reference/`; it targets endpoints that do not exist on the live arena and must never replace `bot_async.py`.
 - A seeded 500-game offline benchmark is reproducible: 52.2% challenger win rate, binomial p≈0.348, `PROMOTE_TO_PROD=False`. This is simulator evidence, not arena strength.
 
+## 15. TRACE evaluator (2026-11-24)
+- `trace_eval.py` is offline-only. It reads `~/.arena-tcg-decisions.jsonl` or a repo-relative copy, derives `traceId`/`parentTraceId` and mandatory-action markers with `scoring.mandatory_action`, and writes R9 evidence.
+- A2A envelopes require full R9 check fields and an evidence reference. `rerun_check` re-runs only allowlisted offline commands and rejects fabricated `observed`, `counts`, `commit`, or `exit_code`.
+- Ticks are append-only at `evidence/trace-loop/ticks.jsonl`. State is derived from referenced evidence; R16 checks both incoming and tip commit against an explicit evaluation head.
+- Gates are produced by `python3 trace_eval.py gates`. Committed result: G-A PASS, G-B FAIL, G-C BLOCKED. G-B FAIL is a finding on the historical corpus, not a failure of the evaluator.
+- Verification: 16 focused tests, 209 full-suite tests, privacy scan clean. `PRD.md`, `spec.md`, `kanban.md`, and `learnings.md` are updated by the coding-session closeout.
+
 ## 14. Guardrail-first policy (2026-11-24)
 - `scoring.mandatory_action(obs, legal)` is the single source for attach-first and development-first rules; both `best_action()` and `bot._choose_action_with_path()` call it first.
 - Belief sync happens on every decision point, including guardrail decisions, so ISMCTS never samples from a stale tracker.

@@ -66,9 +66,15 @@ Ship a minimal but legal bot that can join `[TCG] Playground S6`, play matches w
 - Win rate before this fix: 20.51% lifetime, 15.49% since 2026-11-20 build — no improvement. The fix is not yet measured on the ladder; result is `NOT_RUN` until 900 settled matches.
 - Live supervisor: pm2 service `tcg-bot` on WSL only. MacBook never runs the bot; Mac git sync is blocked (SSH refused).
 
+## Current state — 2026-11-24 evaluator
+- TRACE/A2A/loop evaluator shipped offline at merge `614b72a`. `trace_eval.py` derives trace identity, mandatory eligibility, closed failure classes, R9 evidence, A2A envelope validation, append-only ticks, and G-A/G-B/G-C reporting. No live policy or process change.
+- Gate evidence is honest: G-A PASS, G-B FAIL (486 mandatory bypasses + 497 policy deltas = 983 blocking findings in the historical corpus), G-C BLOCKED. It does not claim the historical corpus is clean.
+- Guardrail-first ladder window: 39 matches, 10 W = 25.64%; CI [14.57%, 41.08%]; p=0.08 vs 15.49%. `NOT_RUN` until 900 settled matches carry `l1-2026-11-24-guardrail-first`.
+- Verification: 16 focused tests, 209 full-suite tests, live focused tests 16 passed, privacy clean.
+
 ## New plans / backlogs
 - P0 (active): measure the guardrail-first policy against the registered precommit; no decision-affecting change inside the window.
-- P1: implement TRACE/A2A/loop eval from `docs/plans/2026-11-24-2105-feat-trace-a2a-loop-plan.md` after `ce-plan` enriches it.
+- P1: TRACE evaluator is shipped; next step is partitioning historical decisions by policy version so G-B can move from FAIL to PASS. No live change.
 - P2: prepare a catalog-validated S8 deck offline; no live deck change until season reset or owner approval.
 - P3: paid Stakes/wallet/payment flows remain ESCALATE.
 

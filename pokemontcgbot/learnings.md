@@ -18,6 +18,13 @@
 - Privacy guard blocks literal home paths in committed files; use `~` or repo-relative paths.
 - Paid Stakes/wallet flows require escalation; they are not autonomous decisions.
 
+## 2026-11-24 evaluator closeout
+- An evaluator's gate FAIL is a result, not a defect. G-B FAIL recorded 983 blocking findings in the historical corpus and was committed; nobody softened it to get a green gate.
+- A handoff is a self-report until its cited checks, counts, commit, and evidence references are re-run and compared. Fabricated observed/counts must be rejected.
+- A committed tick cannot claim its own post-commit HEAD. Use an explicit evaluation head and derive state from referenced evidence.
+- Independent review found three residuals after the first fix round; a second fix round and final review were required before merge.
+- No live restart for offline evaluator work. A verifier that changes the live process cannot certify it neutrally.
+
 ## 2026-11-24 chief run
 - Red review was decisive: a passing Builder suite is not proof. It found four confirmed defects (telemetry attribution, stale belief, exception bypass, fabricated gate) that the Builder's own tests missed. Independent review before merge is mandatory.
 - The real loss mechanism was measurable: belief ISMCTS bypassed mandatory attach/development in 412 of 599 eligible decisions. Fix the decision path before tuning weights or decks.
