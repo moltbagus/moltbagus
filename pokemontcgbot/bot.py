@@ -26,7 +26,7 @@ from arena_config import (
     POLICY_VERSION,
     SEASON_NUMBER,
 )
-from scoring import best_action
+from scoring import best_action, mandatory_action
 
 # Per-decision telemetry (spec section 7). Optional on purpose: a live copy that
 # predates this module must still run the bot.
@@ -260,15 +260,24 @@ def error_code(resp):
 def _choose_action_with_path(pending_entry, belief_heuristic=None):
     """Choose an action and say which path produced it.
 
-    Returns ``(choice, path)`` where ``path`` is ``belief`` (the belief
-    heuristic answered), ``scoring`` (``scoring.best_action`` answered) or
-    ``fallback`` (scoring declined and the first legal action was used).
+    Returns ``(choice, path)`` where ``path`` is ``mandatory`` (survival or
+    development guardrail), ``belief`` (ISMCTS answered), ``scoring``
+    (``scoring.best_action`` answered) or ``fallback`` (first legal action).
     """
     legal = pending_entry.get("legalActions") or []
     if not legal:
         return None, "fallback"
 
     obs = pending_entry.get("obs") or {}
+
+    # Unconditional first: a belief-scored attack must never outrank the
+    # attach/development rules that end no turn and prevent dead boards.
+    try:
+        forced = mandatory_action(obs, legal)
+    except Exception:
+        forced = None
+    if forced is not None and forced[0] in legal:
+        return forced[0], "mandatory"
 
     # Single belief-update path for every decision point.
     if belief_heuristic is not None and HAS_BELIEF:

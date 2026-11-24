@@ -1,3 +1,11 @@
+# VOID — 2026-11-24
+
+This window was voided before its 900-match sample completed. The guardrail fix
+for `l1-2026-11-24-guardrail-first` changes decisions inside the window; at void
+time only 33 settled matches carried `l0-2026-11-23-belief-ismcts` (6 W, 27 L,
+18.18%, Wilson lower bound 8.61%). No result from this window is valid. The
+replacement boundary is `docs/precommit/2026-11-24-guardrail-first.md`.
+
 # Precommit — belief ISMCTS rebasing boundary
 
 Written before the new-policy process started. The numbers below are not chosen
@@ -40,5 +48,5 @@ excluded from the A/B and reported as an attribution failure.
 ## Status
 
 Registered 2026-11-23 before the process restart that activates
-`l0-2026-11-23-belief-ismcts`. Not evaluated. The result is `NOT_RUN` until 900
-settled matches exist.
+`l0-2026-11-23-belief-ismcts`. VOID 2026-11-24 by the guardrail change; do not
+quote any result from this window.

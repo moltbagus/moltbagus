@@ -9,7 +9,7 @@ import wr_report
 
 
 def test_policy_version_is_bumped():
-    assert arena_config.POLICY_VERSION == "l0-2026-11-23-belief-ismcts"
+    assert arena_config.POLICY_VERSION == "l1-2026-11-24-guardrail-first"
 
 
 def test_telemetry_uses_call_time_policy_version(monkeypatch):
