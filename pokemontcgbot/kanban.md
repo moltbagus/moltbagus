@@ -39,7 +39,7 @@
 - [x] Privacy guard fix in committed README; HEAD == origin/main before docs update.
 
 ## In Progress (2026-11-24)
-- [x] Idle-gated pm2 restart of `tcg-bot` — queued after sync; one poller on WSL only.
+- [x] Idle-gated pm2 restart on WSL: `activeMatches == 0`, restart completed 2026-11-24T21:28:35+08, new PID 3485746, restarts=4, one poller. Live files report policy `l1-2026-11-24-guardrail-first`.
 - [x] Repo → WSL live sync of verified code and docs.
 - [ ] Measure `l1-2026-11-24-guardrail-first` to the 900-match precommit; result `NOT_RUN` until sample closes.
 
