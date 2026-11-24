@@ -18,6 +18,14 @@
 - Privacy guard blocks literal home paths in committed files; use `~` or repo-relative paths.
 - Paid Stakes/wallet flows require escalation; they are not autonomous decisions.
 
+## 2026-11-24 chief run
+- Red review was decisive: a passing Builder suite is not proof. It found four confirmed defects (telemetry attribution, stale belief, exception bypass, fabricated gate) that the Builder's own tests missed. Independent review before merge is mandatory.
+- The real loss mechanism was measurable: belief ISMCTS bypassed mandatory attach/development in 412 of 599 eligible decisions. Fix the decision path before tuning weights or decks.
+- Precommit gates must cite an accepted document. A locally chosen 46/42 gate was wrong; plan R6 requires 47% at n≥900 with lower bound ≥43.5% and rank ≤3.
+- Use one shared source for a guardrail: `scoring.mandatory_action`. A second scorer that ignores it is a bypass waiting to happen.
+- Sync repo → live with explicit paths; worktree roots include a `pokemontcgbot/` subdirectory, and a wrong source path silently copies nothing.
+- Never start the bot on the MacBook. WSL is the only runtime. Mac sync is blocked until SSH/Tailscale SSH is enabled.
+
 ## Process after each coding session
 1. Update `PRD.md`, `spec.md`, `kanban.md`, `learnings.md` with current state, plans, and backlogs.
 2. Commit and push to origin; verify `HEAD == origin/main`.

@@ -82,6 +82,13 @@ Out of scope (future):
 - The uploaded `runner.py`/`config.py` deployment variant is stored only as `deploy_reference/`; it targets endpoints that do not exist on the live arena and must never replace `bot_async.py`.
 - A seeded 500-game offline benchmark is reproducible: 52.2% challenger win rate, binomial p≈0.348, `PROMOTE_TO_PROD=False`. This is simulator evidence, not arena strength.
 
+## 14. Guardrail-first policy (2026-11-24)
+- `scoring.mandatory_action(obs, legal)` is the single source for attach-first and development-first rules; both `best_action()` and `bot._choose_action_with_path()` call it first.
+- Belief sync happens on every decision point, including guardrail decisions, so ISMCTS never samples from a stale tracker.
+- Telemetry records `policyPath='mandatory'`; malformed observations stop at the deterministic fallback instead of falling through to belief.
+- Policy version `l1-2026-11-24-guardrail-first`; boundary and gate in `docs/precommit/2026-11-24-guardrail-first.md`.
+- TRACE/A2A/loop requirements plan: `docs/plans/2026-11-24-2105-feat-trace-a2a-loop-plan.md` (requirements-only, not executed).
+
 ## 13. Measurement rules
 - Use `wr_report.py --since ... --baseline ... --no-json` from the live directory against paginated match records. Never subtract leaderboard snapshots.
 - Quote Wilson 95% CI, sample size, baseline, p-value, and pm2 binding (commit, PID, start) together.

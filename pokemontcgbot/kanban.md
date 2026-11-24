@@ -38,9 +38,15 @@
 - [x] Offline v2 package: tracker, engine, expectimax, reproducible paired-seed benchmark, Docker image, and real-schema adapter.
 - [x] Privacy guard fix in committed README; HEAD == origin/main before docs update.
 
-## In Progress (2026-11-23)
-- [x] Idle-gated pm2 restart of `tcg-bot`: `activeMatches == 0` at 2026-11-23T16:08:07+08; `pm2 restart` completed 16:08:08+08; new PID 2587190, restarts=3. Single poller confirmed. Live loop MD5 unchanged — restart loaded the same code, not new code.
-- [x] Repo → WSL live sync of docs and offline reference files.
+## In Progress (2026-11-24)
+- [x] Idle-gated pm2 restart of `tcg-bot` — queued after sync; one poller on WSL only.
+- [x] Repo → WSL live sync of verified code and docs.
+- [ ] Measure `l1-2026-11-24-guardrail-first` to the 900-match precommit; result `NOT_RUN` until sample closes.
+
+## Done (2026-11-24)
+- [x] Builder branch `task/TASK-GUARD-RESTORE-guardrestore` shipped `1f565a4`; independent Red and Blue lanes completed; four confirmed blockers corrected before merge.
+- [x] TRACE/A2A/loop requirements plan merged at `055b8ac` (requirements-only).
+- [x] Merged to `main` at `4d1880c`; merged suite 202 passed / 4 skipped; live focused suite 28 passed.
 
 ## Blocked
 - [ ] MacBook M5 git sync: Tailscale host `colb-m5-macbook-air` is reachable by ping, but SSH on port 22 and 41641 is refused; Tailscale SSH returns 502. Need SSH/Tailscale SSH enabled on the Mac or an alternate sync path.

@@ -60,9 +60,15 @@ Ship a minimal but legal bot that can join `[TCG] Playground S6`, play matches w
 - Measured outcome: 995 S7 matches, 221 W = 22.21% (Wilson 95% CI 19.74–24.90%, p=0.473 vs 21.28% baseline). Post-2026-11-20 build: 686 matches, 108 W = 15.74% (CI 13.21–18.66%, p=0.0000 vs 36.02%). Today: 160 matches, 21 W = 13.12% (p=0.0053 vs 22.29%). This is a regression, not an improvement.
 - World-class gates remain unmet. Top-3 S7 bots run ~47–59%; this bot ranks near bottom.
 
+## Current state — 2026-11-24
+- P0 fix shipped: `scoring.mandatory_action()` now runs before belief ISMCTS in `bot.py`; 412/599 eligible decisions had previously bypassed attach/development guardrails. Policy `l1-2026-11-24-guardrail-first`; precommit `docs/precommit/2026-11-24-guardrail-first.md` (G1: ≥47%, Wilson lower ≥43.5%, n≥900, rank ≤3).
+- Verification: merged tree 202 passed / 4 skipped; live focused suite 28 passed. Independent Red found and Blue verified defects; all four confirmed blockers were corrected before merge.
+- Win rate before this fix: 20.51% lifetime, 15.49% since 2026-11-20 build — no improvement. The fix is not yet measured on the ladder; result is `NOT_RUN` until 900 settled matches.
+- Live supervisor: pm2 service `tcg-bot` on WSL only. MacBook never runs the bot; Mac git sync is blocked (SSH refused).
+
 ## New plans / backlogs
-- P0: find and fix the regression introduced by the 2026-11-20 policy build using red-team replay of real losses; rollback to the last known-good commit is a candidate, not a measured result.
-- P1: prepare a catalog-validated S8 deck offline; no live deck change until the season resets or the owner approves a new agent.
-- P2: keep the offline v2 package (`devfun_tcg_bot/`) as reference/adapter only. It is not imported by the live loop and is not evidence of live improvement.
-- P3: paid [TCG] Stakes entry, bankroll automation, and wallet/payment flows are out of scope until explicitly authorized with a loss cap.
+- P0 (active): measure the guardrail-first policy against the registered precommit; no decision-affecting change inside the window.
+- P1: implement TRACE/A2A/loop eval from `docs/plans/2026-11-24-2105-feat-trace-a2a-loop-plan.md` after `ce-plan` enriches it.
+- P2: prepare a catalog-validated S8 deck offline; no live deck change until season reset or owner approval.
+- P3: paid Stakes/wallet/payment flows remain ESCALATE.
 
