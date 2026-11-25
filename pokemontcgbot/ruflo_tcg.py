@@ -12,7 +12,7 @@ Autonomy levels:
 
 Usage:
     from ruflo_tcg import RufloTCG
-    ruflo = RufloTCG(state_dir=Path("/home/colb/.hermes/state/tcgbot"))
+    ruflo = RufloTCG(state_dir=Path.home() / ".hermes" / "state" / "tcgbot")
     ruflo.observe_match(result="win", actions=18, forfeit=False)
     decision = ruflo.check_promotion()
 """
@@ -30,6 +30,8 @@ from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+from sfl_loop import CorrectionStore
 
 log = logging.getLogger(__name__)
 
@@ -266,6 +268,8 @@ class RufloTCG:
         self.state = self._load_state()
         self._lock = threading.Lock()
         self._loaded_mtime: float | None = None
+        # Stage 1-3 SFL loop: durable corrections live beside the state db.
+        self.corrections = CorrectionStore(self.state_dir)
 
     # ------------------------------------------------------------------ #
     # State persistence
@@ -547,13 +551,59 @@ class RufloTCG:
     # Self-learning from match replays
     # ------------------------------------------------------------------ #
 
-    def record_failure(self, failure_type: str, rule_id: str, evidence: str, severity: str = "warning") -> None:
-        """Record a self-learning failure (SFL Stage 1)."""
+    def record_failure(
+        self,
+        failure_type: str,
+        rule_id: str,
+        evidence: str,
+        severity: str = "warning",
+        rule_text: str | None = None,
+    ) -> None:
+        """Record a self-learning failure (SFL Stage 1).
+
+        Keeps the existing sqlite log and also drives the durable correction
+        store so the failure becomes a persistent, injectable rule.
+        """
+        text = rule_text or f"Remediate {failure_type} per {rule_id}."
         self.db.execute(
             "INSERT INTO sfl_failures (failure_type, rule_id, evidence, severity, ts, extra) VALUES (?, ?, ?, ?, ?, ?)",
             (failure_type, rule_id, evidence, severity, self._now_iso(), "{}"),
         )
         self.db.commit()
+        # Correction artifacts are a derived view.  A failure to write them
+        # must never escape into the live failure path: sqlite is authoritative
+        # and has already committed.
+        try:
+            self.corrections.record_failure(
+                failure_type, rule_id, text, evidence, severity
+            )
+        except Exception as exc:
+            log.warning(
+                "ruflo_tcg: durable correction write failed for %s: %s", rule_id, exc
+            )
+
+    # Thin public accessors for the SFL loop (stages 2 and 3) ---------------- #
+
+    def active_rules(self) -> list[str]:
+        """Stage 2: active rules to inject into an agent's context."""
+        return self.corrections.active_rules()
+
+    def verify(
+        self,
+        rule_id: str,
+        check: str,
+        rule_passed: bool,
+        outcome: str,
+        evidence: str = "",
+    ) -> None:
+        """Stage 3: verify a rule, separate from the match outcome."""
+        return self.corrections.verify(
+            rule_id, check, rule_passed, outcome, evidence
+        )
+
+    def verification_report(self) -> dict[str, int]:
+        """Stage 3: rule-result and outcome totals."""
+        return self.corrections.verification_report()
 
     def propose_strategy(self, proposal: str, evidence: str = "") -> int:
         """Propose a strategy change. Returns proposal ID."""
