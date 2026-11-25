@@ -18,7 +18,7 @@
 
 | Metric | Yesterday | Prior 7 Days | Prior 28 Days | Prior 365 Days |
 | --- | ---: | ---: | ---: | ---: |
-| Input activity (Linux) | 0.1h | 4h | 6.8h | ~166h* |
+| Input activity (Linux) | 0h | 4h | 6.8h | ~155h* |
 | Interactive human attention | 0.0h | 0.0h | 0.0h | 0.0h |
 | Interactive AI generation | 0.0h | 0.0h | 0.3h | 0.3h |
 | Worker-classified human attention | 0.0h | 0.0h | 0.0h | 0.0h |
@@ -27,7 +27,7 @@
 | Interactive sessions | 0 | 0 | 11 | 11 |
 | Worker sessions | 0 | 0 | 0 | 0 |
 
-_Input activity from linux-input-activity:idle-cutoff-300s; collection status: ok. Input sampling began 2026-11-10 (15.0 of 28 days sampled); earlier days are not counted. *365-day estimate uses observed calendar coverage._
+_Input activity from linux-input-activity:idle-cutoff-300s; collection status: ok. Input sampling began 2026-11-10 (16.0 of 28 days sampled); earlier days are not counted. *365-day estimate uses observed calendar coverage._
 
 _Periods are completed local calendar days ending at midnight; today is excluded._
 
@@ -82,7 +82,7 @@ _5.7M total tokens processed. 92.6% cache hit rate._
 ---
 
 <!-- UPDATED-START -->
-_Stats auto-updated 2026-11-25 00:18 UTC by [aidevops](https://aidevops.sh) pulse._
+_Stats auto-updated 2026-11-25 16:08 UTC by [aidevops](https://aidevops.sh) pulse._
 <!-- UPDATED-END -->
 
 <!-- TOTAL-CONTRIBUTIONS-START -->
