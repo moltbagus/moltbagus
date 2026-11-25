@@ -48,9 +48,15 @@
 - [x] Durable corrections: append-only failures, authoritative rule synthesis, context injection, rule-vs-outcome verification.
 - [x] Verified: 22 SFL unit tests, 7 integration tests, 238 full-suite tests with A/B ignores, live 29 SFL tests, privacy clean.
 
-## In Progress (2026-11-25)
-- [ ] Measure `l1-2026-11-24-guardrail-first` to the 900-match precommit; result `NOT_RUN` until sample closes.
-- [ ] Non-blocking follow-ups: refresh `_rules` before writing derived `rules.md`; reject colliding long unsafe ids; commit invalid-UTF-8, two-process flock, and temp-cleanup regression tests.
+## Done (2026-11-26 closeout)
+- [x] TRACE historical bypass classification merged at `98a74c0`; no review blockers.
+- [x] SFL follow-ups merged at `66ff4ae`; confirmed refresh-OSError blocker fixed with RED→GREEN witness and fresh re-review.
+- [x] Post-merge checks: 12 focused SFL, 41 SFL, 255 full-suite, 21 TRACE; WSL live 55 tests; privacy and compile clean.
+- [x] WSL idle-gated pm2 restart: PID 1106097, restarts 5, one poller, policy unchanged.
+
+## In Progress (2026-11-26)
+- [ ] Measure `l1-2026-11-24-guardrail-first` to the 900-match precommit; 476/900 settled matches as measured 2026-11-26, result `NOT_RUN` until sample closes.
+- [ ] Reissue TRACE A2A envelope and tick chain only with an accepted-change note; G-B FAIL and G-C BLOCKED are recorded, not hidden.
 
 ## Done (2026-11-24)
 - [x] Builder branch `task/TASK-GUARD-RESTORE-guardrestore` shipped `1f565a4`; independent Red and Blue lanes completed; four confirmed blockers corrected before merge.

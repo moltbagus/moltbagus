@@ -87,7 +87,8 @@ Out of scope (future):
 - `failures.jsonl` is authoritative. `active_rules()` rebuilds from the log and ignores tampered `rules.md`; `verify()` refreshes rules before rejecting unknown ids.
 - Writes are atomic via temp file + fsync + `os.replace`; reads and writes are serialized with RLock and POSIX `flock`. Corrupt `verify.json` raises `VerificationDataCorrupt`; malformed log lines are skipped with a warning.
 - `RufloTCG.record_failure` commits the sqlite row first; derived correction-write failures are logged and never raised into the live failure path.
-- Verification: 22 SFL unit tests, 7 integration tests, 238 full-suite tests with A/B ignores, live 29 SFL tests, privacy clean. Non-blocking follow-ups are listed in `kanban.md`.
+- Verification at merge `83dc12e`: 22 SFL unit tests, 7 integration tests, 238 full-suite tests with A/B ignores, live 29 SFL tests, privacy clean.
+- Follow-ups shipped at merge `66ff4ae`: strict collision-safe rule ids; committed invalid-UTF-8, two-process flock, and temp-cleanup regressions; a post-append refresh failure now preserves prior `rules.md` and the in-memory map. A fresh missing log is still an empty map. Re-review found no blockers.
 
 ## 15. TRACE evaluator (2026-11-24)
 - `trace_eval.py` is offline-only. It reads `~/.arena-tcg-decisions.jsonl` or a repo-relative copy, derives `traceId`/`parentTraceId` and mandatory-action markers with `scoring.mandatory_action`, and writes R9 evidence.

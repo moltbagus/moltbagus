@@ -26,6 +26,13 @@
 - Atomic write, fsync, replace, and lock on every reader/writer are required for a correction store shared by multiple processes.
 - Tool reality: no `ruflo` CLI, OpenClaw advisory timed out, Mac book SSH refused. Hermes subagents and independent review did the work; those limits are recorded, not simulated.
 
+## 2026-11-26 closeout
+- A swallowed read error is not a safe fallback: `{}` from a failed authoritative-log read erased the derived view. Treat missing log and unreadable log as different states.
+- A regression is only real if it fails before the fix. The two refresh-OSError tests failed on `5e29533` and passed on `8d99d52`; that is why the blocker was retired.
+- Historical corpus classification must be keyed to the active policy version and the production guardrail helper; never edit counts to make a gate green.
+- A verifier that restarts a live process changes the system it certifies. Restart after verification, at `activeMatches=0`, and report the old/new PID separately.
+- `workflowz`, the Mac vault path, and the BTC mapping file were absent. Native Hermes subagents performed the work; those tools were not simulated.
+
 ## 2026-11-24 evaluator closeout
 - An evaluator's gate FAIL is a result, not a defect. G-B FAIL recorded 983 blocking findings in the historical corpus and was committed; nobody softened it to get a green gate.
 - A handoff is a self-report until its cited checks, counts, commit, and evidence references are re-run and compared. Fabricated observed/counts must be rejected.

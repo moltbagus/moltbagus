@@ -1,0 +1,94 @@
+{
+  "schema": "check-record/v1",
+  "repo": "pokemontcgbot",
+  "task": "TASK-TRACE-FOLLOWUP + TASK-SFL-FOLLOWUP closeout",
+  "commit_under_test": "66ff4ae",
+  "worktree": "~/Git/moltbagus/pokemontcgbot/pokemontcgbot (merge worktree)",
+  "environment": "WSL Ubuntu, Python 3 stdlib, pytest, no live policy change",
+  "note": "The recording commit lands after this artifact; the commit field is the merge commit actually tested.",
+  "records": [
+    {
+      "requirement": "TRACE historical bypass classification is correct and current-policy bypasses still block",
+      "execution": "python3 -m pytest -q tests/test_trace_eval.py -k bypass_classification",
+      "expected": "5 passed",
+      "observed": "5 passed, 16 deselected",
+      "exit_code": 0,
+      "artifacts": ["evidence/trace-eval.json", "evidence/trace-gates.json"],
+      "status": "PASS"
+    },
+    {
+      "requirement": "SFL refresh-OSError blocker is fixed with RED to GREEN witness",
+      "execution": "python3 -m pytest -q tests/test_sfl_loop.py -k followup",
+      "expected": "12 passed",
+      "observed": "12 passed, 22 deselected",
+      "exit_code": 0,
+      "artifacts": ["evidence/TASK-SFL-FOLLOWUP-verify.json", "tests/test_sfl_loop.py"],
+      "status": "PASS"
+    },
+    {
+      "requirement": "No regressions in merged tree",
+      "execution": "python3 -m pytest -q --ignore=tests/test_ab_deck.py --ignore=tests/test_ab_engine_lock.py",
+      "expected": "all tests pass",
+      "observed": "255 passed",
+      "exit_code": 0,
+      "artifacts": ["/tmp/postmerge_full.txt"],
+      "status": "PASS"
+    },
+    {
+      "requirement": "SFL and TRACE focused suites pass after merge",
+      "execution": "python3 -m pytest -q tests/test_sfl_loop.py tests/test_sfl_loop_integration.py tests/test_trace_eval.py",
+      "expected": "41 SFL and 21 TRACE tests pass",
+      "observed": "41 passed in 26.79s; 21 passed in 0.36s",
+      "exit_code": 0,
+      "artifacts": ["/tmp/postmerge_sfl.txt", "/tmp/postmerge_trace.txt"],
+      "status": "PASS"
+    },
+    {
+      "requirement": "Independent review approves both commits",
+      "execution": "Reviewer results for b3c4406 and 8d99d52",
+      "expected": "No blocking findings",
+      "observed": "TRACE no blockers; SFL re-review no blockers with two regressions proven RED on 5e29533 and GREEN on 8d99d52",
+      "exit_code": 0,
+      "artifacts": ["evidence/TASK-TRACE-FOLLOWUP-verify.json", "evidence/TASK-SFL-FOLLOWUP-verify.json"],
+      "status": "PASS"
+    },
+    {
+      "requirement": "Gate evidence remains honest",
+      "execution": "python3 -c 'import json;print(json.load(open(\"evidence/trace-gates.json\"))[\"gates\"])'",
+      "expected": "G-A PASS, G-B FAIL, G-C BLOCKED",
+      "observed": "{'G-A': 'PASS', 'G-B': 'FAIL', 'G-C': 'BLOCKED'}",
+      "exit_code": 0,
+      "artifacts": ["evidence/trace-gates.json"],
+      "status": "PASS"
+    },
+    {
+      "requirement": "WSL live sync and idle-gated restart",
+      "execution": "./restart_pm2_when_idle.sh",
+      "expected": "Restart only when activeMatches is zero; one WSL poller; policy unchanged",
+      "observed": "active=0; pm2 tcg-bot PID 3485746 -> 1106097, restarts 5, one process, policy l1-2026-11-24-guardrail-first unchanged; 55 live tests passed",
+      "exit_code": 0,
+      "artifacts": ["~/tcg-bot/restart-pm2-when-idle.log"],
+      "status": "PASS"
+    },
+    {
+      "requirement": "MacBook M5 sync",
+      "execution": "ping colb-m5-macbook-air; tailscale ssh colb-m5-macbook-air 'echo MAC_OK'",
+      "expected": "Host reachable and SSH command succeeds",
+      "observed": "Ping succeeds; Tailscale SSH produces no success output and connection remains refused/unavailable",
+      "exit_code": 1,
+      "artifacts": [],
+      "status": "NOT_RUN",
+      "blocker": "Mac SSH/Tailscale SSH is not enabled; no bot is started on MacBook by design."
+    },
+    {
+      "requirement": "workflowz CLI and BTC mapping reference",
+      "execution": "command -v workflowz; test -f ~/btc5minbot-integration-20261006/QuantGPT_btc5_mapping.md",
+      "expected": "Tools and references present",
+      "observed": "Both absent",
+      "exit_code": 1,
+      "artifacts": [],
+      "status": "NOT_RUN",
+      "blocker": "Named tooling/reference is not installed on this host; native Hermes subagents were used instead."
+    }
+  ]
+}

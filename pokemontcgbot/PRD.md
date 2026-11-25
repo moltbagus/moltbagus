@@ -79,9 +79,17 @@ Ship a minimal but legal bot that can join `[TCG] Playground S6`, play matches w
 - Known limits recorded, not hidden: rules.md is a non-trusted derived view; long unsafe ids can collide after sanitization; invalid UTF-8 / real two-process flock cases were probed manually, not committed as tests.
 - Tool limits: no `ruflo` CLI installed, so no swarm workflow was run. OpenClaw agent advisory timed out (NOT_RUN). Hermes subagents performed Builder and independent reviews.
 
+## Current state — 2026-11-26 closeout
+- TRACE historical bypass classification merged at `98a74c0`; 486 `l0` bypasses are classified historical-unscorable-known-policy, zero current `l1` bypasses, counts reproduced from the raw corpus. G-A PASS / G-B FAIL / G-C BLOCKED remains honestly recorded.
+- SFL follow-ups merged at `66ff4ae`: strict rule ids, committed invalid-UTF-8 / two-process flock / temp-cleanup regressions, and an OSError refresh guard with RED→GREEN proof. Authoritative `failures.jsonl` now preserves prior rules.md and in-memory map on read failure.
+- Post-merge verification: 12 focused SFL, 41 SFL, 255 full-suite, 21 TRACE tests passed; compile and privacy clean. WSL live re-tested 55 tests.
+- Live bot restarted only at `activeMatches=0`: pm2 PID 3485746 → 1106097, restarts 5, one poller, policy `l1-2026-11-24-guardrail-first` unchanged.
+- Measurement: 476 matches since 2026-11-24, 92 W = 19.33%, CI [16.03%,23.11%], p=0.1303 vs 22.21%; 424 matches short of the 900-match boundary. No decision-affecting change shipped.
+
 ## New plans / backlogs
-- P0 (active): measure the guardrail-first policy against the registered precommit; no decision-affecting change inside the window.
-- P1: TRACE evaluator is shipped; next step is partitioning historical decisions by policy version so G-B can move from FAIL to PASS. No live change.
+- P0 (active): measure the guardrail-first policy to 900 settled matches; no decision-affecting change inside the window.
+- P1: refresh the TRACE A2A envelope and tick chain against a current commit only when an accepted-change note exists; keep G-C BLOCKED meanwhile.
 - P2: prepare a catalog-validated S8 deck offline; no live deck change until season reset or owner approval.
 - P3: paid Stakes/wallet/payment flows remain ESCALATE.
+- P4: graph-workspace-loop is available but not installed; this was a bounded delivery cycle, not a recurring weekly loop.
 
