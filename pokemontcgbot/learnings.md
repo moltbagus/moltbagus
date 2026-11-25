@@ -18,6 +18,14 @@
 - Privacy guard blocks literal home paths in committed files; use `~` or repo-relative paths.
 - Paid Stakes/wallet flows require escalation; they are not autonomous decisions.
 
+## 2026-11-25 SFL closeout
+- A passing suite is not proof of safety. The first SFL commit had 225 passing tests but seven correctness blockers; only independent Red review exposed them.
+- Correction data needs one authority: `failures.jsonl`. Markdown `rules.md` is a derived view and must never be trusted as input; tampered derived state cannot become agent context.
+- Verification is not outcome. A win that violates a rule is still a rule failure; the two fields must be stored separately.
+- Live failure paths must not gain new exception sources from derived telemetry. Commit the authoritative record; log derived-write failures and continue.
+- Atomic write, fsync, replace, and lock on every reader/writer are required for a correction store shared by multiple processes.
+- Tool reality: no `ruflo` CLI, OpenClaw advisory timed out, Mac book SSH refused. Hermes subagents and independent review did the work; those limits are recorded, not simulated.
+
 ## 2026-11-24 evaluator closeout
 - An evaluator's gate FAIL is a result, not a defect. G-B FAIL recorded 983 blocking findings in the historical corpus and was committed; nobody softened it to get a green gate.
 - A handoff is a self-report until its cited checks, counts, commit, and evidence references are re-run and compared. Fabricated observed/counts must be rejected.

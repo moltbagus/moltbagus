@@ -43,8 +43,14 @@
 - [x] Offline gate evidence committed: G-A PASS, G-B FAIL, G-C BLOCKED; historical-corpus defects recorded, not hidden.
 - [x] Full suite 209 passed, focused 16 passed, live synced and re-tested.
 
-## In Progress (2026-11-24)
+## Done (2026-11-25 SFL)
+- [x] Ruflo SFL merged at `83dc12e` after two review rounds; final re-review had no blockers.
+- [x] Durable corrections: append-only failures, authoritative rule synthesis, context injection, rule-vs-outcome verification.
+- [x] Verified: 22 SFL unit tests, 7 integration tests, 238 full-suite tests with A/B ignores, live 29 SFL tests, privacy clean.
+
+## In Progress (2026-11-25)
 - [ ] Measure `l1-2026-11-24-guardrail-first` to the 900-match precommit; result `NOT_RUN` until sample closes.
+- [ ] Non-blocking follow-ups: refresh `_rules` before writing derived `rules.md`; reject colliding long unsafe ids; commit invalid-UTF-8, two-process flock, and temp-cleanup regression tests.
 
 ## Done (2026-11-24)
 - [x] Builder branch `task/TASK-GUARD-RESTORE-guardrestore` shipped `1f565a4`; independent Red and Blue lanes completed; four confirmed blockers corrected before merge.

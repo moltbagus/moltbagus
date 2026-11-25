@@ -82,6 +82,13 @@ Out of scope (future):
 - The uploaded `runner.py`/`config.py` deployment variant is stored only as `deploy_reference/`; it targets endpoints that do not exist on the live arena and must never replace `bot_async.py`.
 - A seeded 500-game offline benchmark is reproducible: 52.2% challenger win rate, binomial p≈0.348, `PROMOTE_TO_PROD=False`. This is simulator evidence, not arena strength.
 
+## 16. Ruflo self-fixing loop (2026-11-25)
+- `sfl_loop.py` is offline-only and stdlib-only. `CorrectionStore` writes append-only `corrections/tcg/failures.jsonl`, derives deduplicated `rules.md`, and records `verify.json` with `rule_passed` separate from outcome.
+- `failures.jsonl` is authoritative. `active_rules()` rebuilds from the log and ignores tampered `rules.md`; `verify()` refreshes rules before rejecting unknown ids.
+- Writes are atomic via temp file + fsync + `os.replace`; reads and writes are serialized with RLock and POSIX `flock`. Corrupt `verify.json` raises `VerificationDataCorrupt`; malformed log lines are skipped with a warning.
+- `RufloTCG.record_failure` commits the sqlite row first; derived correction-write failures are logged and never raised into the live failure path.
+- Verification: 22 SFL unit tests, 7 integration tests, 238 full-suite tests with A/B ignores, live 29 SFL tests, privacy clean. Non-blocking follow-ups are listed in `kanban.md`.
+
 ## 15. TRACE evaluator (2026-11-24)
 - `trace_eval.py` is offline-only. It reads `~/.arena-tcg-decisions.jsonl` or a repo-relative copy, derives `traceId`/`parentTraceId` and mandatory-action markers with `scoring.mandatory_action`, and writes R9 evidence.
 - A2A envelopes require full R9 check fields and an evidence reference. `rerun_check` re-runs only allowlisted offline commands and rejects fabricated `observed`, `counts`, `commit`, or `exit_code`.

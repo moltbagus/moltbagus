@@ -72,6 +72,13 @@ Ship a minimal but legal bot that can join `[TCG] Playground S6`, play matches w
 - Guardrail-first ladder window: 39 matches, 10 W = 25.64%; CI [14.57%, 41.08%]; p=0.08 vs 15.49%. `NOT_RUN` until 900 settled matches carry `l1-2026-11-24-guardrail-first`.
 - Verification: 16 focused tests, 209 full-suite tests, live focused tests 16 passed, privacy clean.
 
+## Current state — 2026-11-25 SFL
+- Ruflo self-fixing loop shipped offline at merge `83dc12e`. `sfl_loop.py` implements the three stages: append-only failures, idempotent rules from the authoritative log, and verification separate from outcome. `RufloTCG.record_failure` now writes the durable view without raising into the live failure path.
+- Independent Red review found seven blockers in the first Builder commit; all were fixed before merge. Final re-review approved `4e34981` with no blockers.
+- Verification: 22 SFL unit tests, 7 integration tests, 238 full-suite tests with A/B ignores; live copy re-tested 29 SFL tests. No live policy/deck/process change.
+- Known limits recorded, not hidden: rules.md is a non-trusted derived view; long unsafe ids can collide after sanitization; invalid UTF-8 / real two-process flock cases were probed manually, not committed as tests.
+- Tool limits: no `ruflo` CLI installed, so no swarm workflow was run. OpenClaw agent advisory timed out (NOT_RUN). Hermes subagents performed Builder and independent reviews.
+
 ## New plans / backlogs
 - P0 (active): measure the guardrail-first policy against the registered precommit; no decision-affecting change inside the window.
 - P1: TRACE evaluator is shipped; next step is partitioning historical decisions by policy version so G-B can move from FAIL to PASS. No live change.
