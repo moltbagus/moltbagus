@@ -56,6 +56,100 @@ def test_ae1_mandatory_bypass_is_blocking(tmp_path):
     assert trace_eval.gate_b(report) == "FAIL"
 
 
+def _bypass_record(policy="l1-2026-11-24-guardrail-first", mid="hb"):
+    """Synthetic eligible turn whose forced attach action was not chosen."""
+    record = _record(mid=mid, policy=policy)
+    record["obs"]["current"]["energyAttached"] = False
+    record["obs"]["current"]["select"]["option"] = [
+        {"type": 8, "inPlayArea": 4, "inPlayIndex": 0},
+        {"type": 13, "attackId": 1071},
+    ]
+    record["chosen"] = "[1]"
+    record["legalActions"] = ["[0]", "[1]"]
+    return record
+
+
+def test_bypass_classification_historical_is_observed(tmp_path):
+    corpus = _write_corpus(tmp_path / "c.jsonl", [
+        _bypass_record(policy="l0-2026-11-23-belief-ismcts"),
+    ])
+    report = trace_eval.evaluate_corpus(
+        corpus, active_version="l1-2026-11-24-guardrail-first",
+        accepted_change_note="historical partition",
+    )
+    bypasses = [f for f in report["findings"] if f["class"] == "MANDATORY_ACTION_BYPASS"]
+    assert len(bypasses) == 1
+    assert bypasses[0]["severity"] == "observed"
+    assert bypasses[0]["classification"] == trace_eval.CLASSIFICATION_HISTORICAL
+    assert report["counts"]["MANDATORY_ACTION_BYPASS"] == 1
+    assert report["bypass_classification"][trace_eval.CLASSIFICATION_HISTORICAL] == 1
+    assert report["bypass_classification"][trace_eval.CLASSIFICATION_CURRENT] == 0
+    assert trace_eval.gate_b(report) == "PASS"
+
+
+def test_bypass_classification_current_stays_blocking(tmp_path):
+    corpus = _write_corpus(tmp_path / "c.jsonl", [
+        _bypass_record(policy="l1-2026-11-24-guardrail-first"),
+    ])
+    report = trace_eval.evaluate_corpus(
+        corpus, active_version="l1-2026-11-24-guardrail-first",
+        accepted_change_note="historical partition",
+    )
+    bypasses = [f for f in report["findings"] if f["class"] == "MANDATORY_ACTION_BYPASS"]
+    assert len(bypasses) == 1
+    assert bypasses[0]["severity"] == "blocking"
+    assert bypasses[0]["classification"] == trace_eval.CLASSIFICATION_CURRENT
+    assert report["bypass_classification"][trace_eval.CLASSIFICATION_CURRENT] == 1
+    assert trace_eval.gate_b(report) == "FAIL"
+
+
+def test_bypass_classification_marker_from_production_helper(tmp_path):
+    import scoring
+    forced = scoring.mandatory_action(_bypass_record()["obs"], ["[0]", "[1]"])
+    assert forced is not None and forced[0] == "[0]"
+    corpus = _write_corpus(tmp_path / "c.jsonl", [
+        _bypass_record(policy="l0-2026-11-23-belief-ismcts", mid="m0"),
+        _bypass_record(policy="l1-2026-11-24-guardrail-first", mid="m1"),
+    ])
+    report = trace_eval.evaluate_corpus(
+        corpus, active_version="l1-2026-11-24-guardrail-first",
+        accepted_change_note="historical partition",
+    )
+    assert all(t["mandatoryActionEligible"] is True for t in report["traces"])
+    assert all(t["mandatoryActionSatisfied"] is False for t in report["traces"])
+    assert report["bypass_classification"][trace_eval.CLASSIFICATION_HISTORICAL] == 1
+    assert report["bypass_classification"][trace_eval.CLASSIFICATION_CURRENT] == 1
+
+
+def test_bypass_classification_taxonomy_stays_closed():
+    assert set(trace_eval.CLASSES) == {
+        "ILLEGAL_ACTION", "MANDATORY_ACTION_BYPASS", "ATTRIBUTION_MISMATCH",
+        "UNSCORABLE_RECORD", "POLICY_DELTA", "LATENCY_REGRESSION", "SCHEMA_INVALID",
+    }
+    assert trace_eval.CLASSIFICATION_HISTORICAL not in trace_eval.CLASSES
+    active = "l1-2026-11-24-guardrail-first"
+    assert trace_eval._bypass_classification(active, active) == trace_eval.CLASSIFICATION_CURRENT
+    for version in trace_eval.KNOWN_VERSIONS:
+        if version != active:
+            assert trace_eval._bypass_classification(version, active) == trace_eval.CLASSIFICATION_HISTORICAL
+    assert trace_eval._bypass_classification("legacy", active) is None
+
+
+def test_bypass_classification_other_blocking_classes_still_block(tmp_path):
+    record = _bypass_record(policy="l0-2026-11-23-belief-ismcts")
+    record["chosen"] = "[9]"  # absent from legalActions: ILLEGAL_ACTION
+    corpus = _write_corpus(tmp_path / "c.jsonl", [record])
+    report = trace_eval.evaluate_corpus(
+        corpus, active_version="l1-2026-11-24-guardrail-first",
+        accepted_change_note="historical partition",
+    )
+    illegal = [f for f in report["findings"] if f["class"] == "ILLEGAL_ACTION"]
+    assert illegal and illegal[0]["severity"] == "blocking"
+    bypass = [f for f in report["findings"] if f["class"] == "MANDATORY_ACTION_BYPASS"]
+    assert bypass and bypass[0]["severity"] == "observed"
+    assert trace_eval.gate_b(report) == "FAIL"
+
+
 def test_ae4_missing_corpus_is_not_run(tmp_path):
     report = trace_eval.evaluate_corpus(tmp_path / "absent.jsonl", active_version="v")
     assert report["status"] == "NOT_RUN"

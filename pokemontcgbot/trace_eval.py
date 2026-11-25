@@ -34,6 +34,8 @@ CLASSES = (
 TRACE_FIELDS = ("matchId", "seq", "chosen", "policyPath", "policyVersion", "latencyMs", "obs", "state")
 LATENCY_BOUND_MS = 1500.0
 KNOWN_VERSIONS = ("l0-2026-11-23-belief-ismcts", "l1-2026-11-24-guardrail-first")
+CLASSIFICATION_CURRENT = "current-policy"
+CLASSIFICATION_HISTORICAL = "historical-unscorable-known-policy"
 STATES = ("REQUIREMENTS", "PLANNING", "IMPLEMENTING", "VERIFYING", "BLOCKED", "DONE")
 ENVELOPE_FIELDS = (
     "task_id", "from_agent", "to_agent", "base_commit", "artifact_path",
@@ -79,6 +81,24 @@ def _eligibility(record: Dict[str, Any]) -> tuple[Optional[bool], Optional[bool]
     return True, chosen == forced[0]
 
 
+def _bypass_classification(version: Optional[str], active: Optional[str]) -> Optional[str]:
+    """Disposition of an eligible-but-unsatisfied mandatory action.
+
+    The eligibility markers themselves are derived in ``_eligibility`` through
+    ``scoring.mandatory_action`` -- the same production helper that governs live
+    decisions. This helper only decides whether a bypass belongs to the active
+    policy or to a known pre-guardrail policy: a known version other than the
+    active one predates the active guardrail, so its bypass is historical and
+    cannot be scored against the current policy. Unknown versions are never
+    eligible (``_eligibility`` returns null for them).
+    """
+    if version == active:
+        return CLASSIFICATION_CURRENT
+    if version in KNOWN_VERSIONS:
+        return CLASSIFICATION_HISTORICAL
+    return None
+
+
 def evaluate_corpus(path: Path, active_version: Optional[str] = None, accepted_change_note: Optional[str] = None) -> Dict[str, Any]:
     """Read a JSONL corpus and return traces, findings, and counts."""
     active = active_version or arena_config.POLICY_VERSION
@@ -91,6 +111,7 @@ def evaluate_corpus(path: Path, active_version: Optional[str] = None, accepted_c
             "traces": [],
             "findings": [],
             "counts": {c: 0 for c in CLASSES},
+            "bypass_classification": {CLASSIFICATION_CURRENT: 0, CLASSIFICATION_HISTORICAL: 0},
         }
 
     traces: List[Dict[str, Any]] = []
@@ -101,6 +122,8 @@ def evaluate_corpus(path: Path, active_version: Optional[str] = None, accepted_c
     illegal = 0
     changed = 0
     unscorable = 0
+    bypass_current = 0
+    bypass_historical = 0
 
     with path.open(encoding="utf-8") as handle:
         for raw in handle:
@@ -151,14 +174,25 @@ def evaluate_corpus(path: Path, active_version: Optional[str] = None, accepted_c
                 counts["ILLEGAL_ACTION"] += 1
                 findings.append(_finding("ILLEGAL_ACTION", "blocking", tid, "R5", f"chosen {chosen} not in legalActions"))
 
-            if eligible is True and satisfied is False:
-                counts["MANDATORY_ACTION_BYPASS"] += 1
-                findings.append(_finding(
-                    "MANDATORY_ACTION_BYPASS", "blocking", tid, "R2",
-                    "eligible mandatory action was not satisfied",
-                ))
-
             version = record.get("policyVersion")
+            if eligible is True and satisfied is False:
+                classification = _bypass_classification(version, active)
+                if classification is None:
+                    # Fail closed: an unrecognized version must never soften a bypass.
+                    classification = CLASSIFICATION_CURRENT
+                severity = "observed" if classification == CLASSIFICATION_HISTORICAL else "blocking"
+                finding = _finding(
+                    "MANDATORY_ACTION_BYPASS", severity, tid, "R2",
+                    f"eligible mandatory action was not satisfied; classification={classification}",
+                )
+                finding["classification"] = classification
+                counts["MANDATORY_ACTION_BYPASS"] += 1
+                findings.append(finding)
+                if classification == CLASSIFICATION_HISTORICAL:
+                    bypass_historical += 1
+                else:
+                    bypass_current += 1
+
             if version != active:
                 counts["ATTRIBUTION_MISMATCH"] += 1
                 findings.append(_finding(
@@ -200,6 +234,10 @@ def evaluate_corpus(path: Path, active_version: Optional[str] = None, accepted_c
         "traces": traces,
         "findings": findings,
         "counts": counts,
+        "bypass_classification": {
+            CLASSIFICATION_CURRENT: bypass_current,
+            CLASSIFICATION_HISTORICAL: bypass_historical,
+        },
         "scorable": scorable,
         "illegal": illegal,
         "changed": changed,
@@ -230,6 +268,7 @@ def write_evidence(corpus: Path, out: Path, active_version: Optional[str] = None
         "expected": "G-B PASS with illegal==0 and scorable>0 and no blocking findings",
         "observed": f"{report['observed']}; gate={gate}",
         "counts": report["counts"],
+        "bypass_classification": report["bypass_classification"],
         "exit_code": 0 if gate == "PASS" else 1,
         "status": report["status"],
         "blocking_findings": sum(1 for f in report["findings"] if f.get("severity") == "blocking"),
