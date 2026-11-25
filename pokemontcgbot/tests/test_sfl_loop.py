@@ -2,6 +2,7 @@
 import json
 import os
 import threading
+from pathlib import Path
 from unittest import mock
 
 import pytest
@@ -264,3 +265,176 @@ def test_hardening_startup_survives_broken_correction_dir(tmp_path):
     (tmp_path / "corrections" / "tcg").write_text("blocker", encoding="utf-8")
     store = CorrectionStore(tmp_path)  # must not raise
     assert store._rules == {}
+
+
+# --------------------------------------------------------------------------- #
+# Follow-ups: authoritative refresh, collision-safe ids, committed regressions
+# --------------------------------------------------------------------------- #
+
+
+def test_followup_record_failure_refreshes_authoritative_rules(tmp_path):
+    stale = CorrectionStore(tmp_path)  # constructed before the writer appends
+    writer = CorrectionStore(tmp_path)
+    writer.record_failure("x", "R-FU-A", "Rule from writer.", "e")
+    stale.record_failure("x", "R-FU-B", "Rule from stale store.", "e")
+
+    content = (tmp_path / "corrections/tcg/rules.md").read_text(encoding="utf-8")
+    assert "- [R-FU-A]" in content
+    assert "- [R-FU-B]" in content
+    assert stale.active_rules() == writer.active_rules()
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        "R/A",
+        "R A",
+        "R-ok] injected",
+        "R\n- [R-EVIL] injected",
+        "R-" + "A" * sfl_loop.MAX_RULE_ID_LEN,
+    ],
+)
+def test_followup_sanitize_id_rejects_unsafe_and_overlong(raw):
+    with pytest.raises(sfl_loop.UnsafeRuleId):
+        sfl_loop._sanitize_id(raw, "")
+    assert sfl_loop._sanitize_id("R-SAFE-1", "") == "R-SAFE-1"
+
+
+def test_followup_unsafe_and_overlong_ids_do_not_collide(tmp_path):
+    store = CorrectionStore(tmp_path)
+    long_prefix = "R-" + "A" * sfl_loop.MAX_RULE_ID_LEN
+    for raw in (long_prefix + "1", long_prefix + "2", "R/A", "R A"):
+        store.record_failure("x", raw, "distinct rule", "e")
+
+    rules = store.active_rules()
+    assert len(rules) == 4
+    ids = [rule.split("]")[0].split("[")[1] for rule in rules]
+    assert len(set(ids)) == 4, f"sanitized ids collided: {ids}"
+    assert all("\n" not in rule and "R-EVIL" not in rule for rule in rules)
+
+
+def test_followup_invalid_utf8_failure_lines_are_skipped(tmp_path):
+    log_path = tmp_path / "corrections/tcg/failures.jsonl"
+    log_path.parent.mkdir(parents=True)
+    good = json.dumps(
+        {"rule_id": "R-UTF8", "rule_text": "Good rule.", "severity": "warning"}
+    )
+    log_path.write_bytes(good.encode("utf-8") + b"\n" + b"\xff\xfe not utf8\n")
+
+    assert CorrectionStore(tmp_path).active_rules() == [
+        "- [R-UTF8] Good rule. (severity: warning)"
+    ]
+
+
+@pytest.mark.skipif(sfl_loop.fcntl is None, reason="POSIX flock required")
+def test_followup_real_two_process_flock_serializes(tmp_path):
+    import multiprocessing as mp
+    import time
+
+    ctx = mp.get_context("fork")
+    ready, start = ctx.Event(), ctx.Event()
+    queue = ctx.Queue()
+
+    def child():
+        store = CorrectionStore(tmp_path)
+        ready.set()
+        if not start.wait(5):
+            return
+        waited_at = time.monotonic()
+        store.active_rules()  # takes LOCK_SH, must block on the parent's LOCK_EX
+        queue.put(time.monotonic() - waited_at)
+
+    proc = ctx.Process(target=child)
+    proc.start()
+    waited = None
+    try:
+        assert ready.wait(5), "child never became ready"
+        parent = CorrectionStore(tmp_path)
+        with parent._locked(exclusive=True):
+            start.set()
+            time.sleep(0.6)
+        waited = queue.get(timeout=5)
+        proc.join(5)
+    finally:
+        if proc.is_alive():
+            proc.terminate()
+            proc.join(5)
+
+    assert proc.exitcode == 0
+    assert waited is not None and waited >= 0.3, (
+        f"second process did not wait for flock: {waited}"
+    )
+
+
+def test_followup_failed_replace_leaves_no_temp_file(tmp_path):
+    store = CorrectionStore(tmp_path)
+    with mock.patch.object(
+        sfl_loop.os, "replace", side_effect=OSError("replace failed")
+    ):
+        with pytest.raises(OSError, match="replace failed"):
+            store.record_failure("x", "R-TEMP", "rule", "e")
+
+    correction_dir = tmp_path / "corrections/tcg"
+    assert not list(correction_dir.glob("*.tmp"))
+    assert not list(correction_dir.glob(".*.tmp"))
+    assert "R-TEMP" in (correction_dir / "failures.jsonl").read_text(encoding="utf-8")
+
+
+def test_followup_refresh_read_error_preserves_rules_md_and_map(tmp_path):
+    """A post-append refresh OSError must not wipe the derived view or map.
+
+    Regression for the confirmed blocker: `_load_rules` used to swallow an
+    `OSError` from `open` into `{}`, so `record_failure` assigned the empty map
+    and rewrote rules.md to header-only while the authoritative log still held
+    the earlier rule.  Inject the error at the read-open so the whole path is
+    exercised, not just a patched `_load_rules`.
+    """
+    store = CorrectionStore(tmp_path)
+    store.record_failure("x", "R-SEED", "seed rule", "e")
+
+    rules_path = tmp_path / "corrections/tcg/rules.md"
+    before = rules_path.read_text(encoding="utf-8")
+    prior_map = dict(store._rules)
+
+    real_open = Path.open
+
+    def selective_open(self, *args, **kwargs):
+        mode = args[0] if args else kwargs.get("mode", "r")
+        if self.name == "failures.jsonl" and "r" in mode:
+            raise OSError("simulated refresh read failure")
+        return real_open(self, *args, **kwargs)
+
+    with mock.patch.object(Path, "open", selective_open):
+        # The append (mode "a") still succeeds; only the refresh read fails.
+        store.record_failure("x", "R-NEW", "new rule", "e")
+
+    assert rules_path.read_text(encoding="utf-8") == before
+    assert store._rules == prior_map
+    log = (tmp_path / "corrections/tcg/failures.jsonl").read_text(encoding="utf-8")
+    assert "R-SEED" in log and "R-NEW" in log
+
+
+def test_followup_load_rules_distinguishes_missing_log_from_read_failure(tmp_path):
+    """No log file is an empty map; an unreadable log raises to the caller."""
+    store = CorrectionStore(tmp_path)
+    # Fresh store: no authoritative log -> legitimate empty map, no exception.
+    assert not (tmp_path / "corrections/tcg/failures.jsonl").exists()
+    assert store._load_rules() == {}
+
+    log_path = tmp_path / "corrections/tcg/failures.jsonl"
+    log_path.write_text(
+        json.dumps({"rule_id": "R-READ", "rule_text": "rule", "severity": "warning"})
+        + "\n",
+        encoding="utf-8",
+    )
+    real_open = Path.open
+
+    def selective_open(self, *args, **kwargs):
+        mode = args[0] if args else kwargs.get("mode", "r")
+        if self.name == "failures.jsonl" and "r" in mode:
+            raise OSError("log present but unreadable")
+        return real_open(self, *args, **kwargs)
+
+    with mock.patch.object(Path, "open", selective_open):
+        with pytest.raises(OSError, match="log present but unreadable"):
+            store._load_rules()

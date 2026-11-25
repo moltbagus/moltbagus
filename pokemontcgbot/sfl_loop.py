@@ -23,6 +23,7 @@ only maintains durable correction artifacts under a caller-supplied root.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import os
@@ -52,7 +53,10 @@ MAX_RULE_ID_LEN = 128
 MAX_RULE_TEXT_LEN = 2000
 MAX_TOKEN_LEN = 128
 DEFAULT_RULE_ID = "R-SFL-UNSPECIFIED"
+SURROGATE_PREFIX = "R-SFL-X-"
+SURROGATE_DIGEST_LEN = 16
 _UNSAFE_ID_CHARS = re.compile(r"[^A-Za-z0-9._:-]")
+_UNSAFE_TOKEN_CHARS = re.compile(r"[^A-Za-z0-9._:-]")
 _UNDERSCORES = re.compile(r"_+")
 _WHITESPACE = re.compile(r"\s+")
 _LINE_SEPARATORS = {"\u2028", "\u2029"}
@@ -62,20 +66,54 @@ class VerificationDataCorrupt(ValueError):
     """Raised when verify.json is malformed; never silently zero its data."""
 
 
+class UnsafeRuleId(ValueError):
+    """Raised when a rule id is unsafe or overlong to serve as a stable key."""
+
+
 def _now_iso() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def _sanitize_id(raw: Any, fallback: str) -> str:
-    """Reduce an arbitrary value to a single safe markdown bracket token.
+    """Return ``raw`` only when it is already a safe, bounded rule id.
 
-    Newlines, control characters, brackets and other punctuation are removed
-    so a rule id can never inject a phantom bullet into ``rules.md``.
+    Unsafe characters are *rejected*, never folded: folding maps distinct ids
+    (``R/A`` and ``R A``) onto one token.  Overlong ids are rejected too,
+    never truncated: truncation maps distinct long ids sharing a prefix onto
+    one rule and silently overwrites it.  ``None``/empty resolve to
+    ``fallback`` for optional callers; malformed values raise
+    :class:`UnsafeRuleId` so no derived rule key is invented by accident.
     """
-    text = _UNSAFE_ID_CHARS.sub("_", str(raw).strip())
-    text = _UNDERSCORES.sub("_", text).strip("_.")
-    text = text[:MAX_RULE_ID_LEN]
-    return text or fallback
+    if raw is None:
+        return fallback
+    text = str(raw).strip()
+    if not text:
+        return fallback
+    if len(text) > MAX_RULE_ID_LEN or _UNSAFE_ID_CHARS.search(text):
+        raise UnsafeRuleId(
+            f"rule id must be 1..{MAX_RULE_ID_LEN} chars of [A-Za-z0-9._:-]"
+        )
+    return text
+
+
+def _surrogate_rule_id(raw: Any) -> str:
+    """Explicit collision-resistant key for an id rejected by ``_sanitize_id``.
+
+    The unsafe/overlong value is never used as a markdown token.  Its digest
+    keeps distinct rejected ids distinct instead of folding them onto one
+    sentinel that would overwrite the previous rule.
+    """
+    digest = hashlib.sha256(str(raw).encode("utf-8", "replace")).hexdigest()
+    return SURROGATE_PREFIX + digest[:SURROGATE_DIGEST_LEN]
+
+
+def _record_rule_id(raw: Any, fallback: str) -> str:
+    """Validate a caller-supplied id, rejecting unsafe values explicitly."""
+    try:
+        return _sanitize_id(raw, fallback)
+    except UnsafeRuleId as exc:
+        log.warning("sfl_loop: rejecting unsafe rule id %r: %s", raw, exc)
+        return _surrogate_rule_id(raw)
 
 
 def _sanitize_text(raw: Any, max_len: int = MAX_RULE_TEXT_LEN) -> str:
@@ -90,7 +128,14 @@ def _sanitize_text(raw: Any, max_len: int = MAX_RULE_TEXT_LEN) -> str:
 
 
 def _sanitize_severity(raw: Any) -> str:
-    return _sanitize_id(raw, "warning").lower()[:MAX_TOKEN_LEN]
+    """Fold a severity into one safe display token (it is not a rule key).
+
+    Folding here cannot overwrite another rule, so it stays lenient; rule ids
+    use the strict validator above instead.
+    """
+    text = _UNSAFE_TOKEN_CHARS.sub("_", str(raw).strip())
+    text = _UNDERSCORES.sub("_", text).strip("_.")
+    return (text or "warning").lower()[:MAX_TOKEN_LEN]
 
 
 def _atomic_write_text(path: Path, text: str) -> None:
@@ -186,15 +231,30 @@ class CorrectionStore:
 
         Caller holds ``_locked``.  Malformed lines are logged and skipped; a
         single bad line must not erase every other rule.
+
+        A *missing* log is a legitimately empty map.  A log that exists but
+        cannot be read is a real failure and is raised to the caller so it can
+        keep its prior in-memory map / derived rules.md instead of overwriting
+        them with an empty map.
         """
         rules: dict[str, dict[str, str]] = {}
-        if not self.failures_path.exists():
-            return rules
         try:
-            fh = self.failures_path.open("r", encoding="utf-8")
-        except OSError as exc:
-            log.warning("sfl_loop: cannot read failures log: %s", exc)
+            # Invalid UTF-8 must not abort the whole authoritative log: the
+            # replacement char makes that line invalid JSON (or an unsafe id)
+            # and it is skipped just like any other malformed record.
+            fh = self.failures_path.open(
+                "r", encoding="utf-8", errors="replace"
+            )
+        except FileNotFoundError:
+            # No authoritative log yet (fresh store): an empty map is correct,
+            # not a failed refresh.  Relying on open() here also avoids a
+            # time-of-check/time-of-use gap with an exists() probe.
             return rules
+        except OSError:
+            # The log is present but unreadable.  Surface it: callers already
+            # catch OSError and preserve their prior state.  Swallowing it
+            # into {} would make record_failure wipe rules.md to header-only.
+            raise
         with fh:
             for lineno, line in enumerate(fh, 1):
                 line = line.strip()
@@ -213,7 +273,13 @@ class CorrectionStore:
                 raw_id = rec.get("rule_id")
                 if raw_id is None:
                     continue
-                rule_id = _sanitize_id(raw_id, "")
+                try:
+                    rule_id = _sanitize_id(raw_id, "")
+                except UnsafeRuleId:
+                    log.warning(
+                        "sfl_loop: skipping unsafe rule id on line %d", lineno
+                    )
+                    continue
                 if not rule_id:
                     log.warning("sfl_loop: skipping unusable rule id on line %d", lineno)
                     continue
@@ -228,7 +294,10 @@ class CorrectionStore:
 
     def _format_rule(self, rule_id: str, entry: dict[str, str]) -> str:
         """Render one safe, single-line rule (never parse rules.md as input)."""
-        rid = _sanitize_id(rule_id, DEFAULT_RULE_ID)
+        try:
+            rid = _sanitize_id(rule_id, DEFAULT_RULE_ID)
+        except UnsafeRuleId:  # defensive: map keys are validated at ingest
+            rid = DEFAULT_RULE_ID
         text = _sanitize_text(entry.get("rule_text", ""))
         sev = _sanitize_severity(entry.get("severity", "warning"))
         return f"- [{rid}] {text} (severity: {sev})"
@@ -249,7 +318,7 @@ class CorrectionStore:
         severity: str = "warning",
     ) -> None:
         """Stage 1 + 2: log the failure and synthesize its persistent rule."""
-        rid = _sanitize_id(rule_id, DEFAULT_RULE_ID)
+        rid = _record_rule_id(rule_id, DEFAULT_RULE_ID)
         text = _sanitize_text(rule_text)
         sev = _sanitize_severity(severity)
         ftype = _sanitize_text(failure_type, MAX_TOKEN_LEN)
@@ -267,12 +336,21 @@ class CorrectionStore:
                 fh.write(json.dumps(record, sort_keys=True) + "\n")
                 fh.flush()
                 os.fsync(fh.fileno())
-            self._rules[rid] = {
-                "rule_text": text,
-                "severity": sev,
-                "failure_type": ftype,
-            }
-            self._write_rules()
+            # failures.jsonl is authoritative.  Another store instance may
+            # have appended after this one was constructed, so rebuild the
+            # derived rule map from the log before rewriting rules.md.  If the
+            # refresh fails, leave the derived view untouched rather than
+            # writing a stale map over it.
+            try:
+                self._rules = self._load_rules()
+            except (OSError, UnicodeError, ValueError) as exc:
+                log.warning(
+                    "sfl_loop: rule refresh after append failed; "
+                    "derived rules.md left untouched: %s",
+                    exc,
+                )
+            else:
+                self._write_rules()
 
     def active_rules(self) -> list[str]:
         """Stage 2: rules to inject into an agent's context.
