@@ -1,0 +1,124 @@
+{
+  "schema": "aidevops.repo-metrics.v1",
+  "schema_version": 1,
+  "generated_at": "2026-11-28T14:08:35Z",
+  "tool": {
+    "name": "aidevops repo-metrics",
+    "version": "1.0.0"
+  },
+  "repo": {
+    "name": "moltbagus",
+    "slug": "moltbagus/moltbagus"
+  },
+  "summary": {
+    "source_files": 115,
+    "code": 21151,
+    "comments": 349,
+    "blanks": 2923,
+    "languages": 8,
+    "dependencies": 1
+  },
+  "languages": [
+    {
+      "name": "Python",
+      "files": 59,
+      "code": 10615,
+      "comments": 315,
+      "blanks": 2137,
+      "percentage": 50.19,
+      "color": "#3572A5"
+    },
+    {
+      "name": "JSON",
+      "files": 13,
+      "code": 7478,
+      "comments": 0,
+      "blanks": 4,
+      "percentage": 35.36,
+      "color": "#292929"
+    },
+    {
+      "name": "Markdown",
+      "files": 30,
+      "code": 2690,
+      "comments": 0,
+      "blanks": 748,
+      "percentage": 12.72,
+      "color": "#083fa1"
+    },
+    {
+      "name": "Shell",
+      "files": 6,
+      "code": 187,
+      "comments": 18,
+      "blanks": 23,
+      "percentage": 0.88,
+      "color": "#89e051"
+    },
+    {
+      "name": "YAML",
+      "files": 2,
+      "code": 88,
+      "comments": 15,
+      "blanks": 11,
+      "percentage": 0.42,
+      "color": "#cb171e"
+    },
+    {
+      "name": "SVG",
+      "files": 2,
+      "code": 60,
+      "comments": 0,
+      "blanks": 0,
+      "percentage": 0.28,
+      "color": "#6e7781"
+    },
+    {
+      "name": "JavaScript",
+      "files": 1,
+      "code": 17,
+      "comments": 0,
+      "blanks": 0,
+      "percentage": 0.08,
+      "color": "#f1e05a"
+    },
+    {
+      "name": "Dockerfile",
+      "files": 2,
+      "code": 16,
+      "comments": 1,
+      "blanks": 0,
+      "percentage": 0.08,
+      "color": "#384d54"
+    }
+  ],
+  "dependencies": {
+    "direct": 1,
+    "runtime": 1,
+    "dev": 0,
+    "locked": 0,
+    "total": 1,
+    "ecosystems": [
+      "python"
+    ],
+    "manifests": [
+      {
+        "path": "pokemontcgbot/devfun_tcg_bot/deploy_reference/requirements.txt",
+        "ecosystem": "python",
+        "direct": 1,
+        "runtime": 1,
+        "dev": 0,
+        "locked": 0,
+        "dependencies": [
+          "httpx"
+        ],
+        "dev_dependencies": []
+      }
+    ]
+  },
+  "refresh": {
+    "default_policy": "weekly scheduled refresh plus manual runs; skip generated outputs younger than 24h in managed workflows",
+    "cost_profile": "fast local git/unignored-file scan; no network by default",
+    "top_languages": 6
+  }
+}
